@@ -18,9 +18,9 @@
 #include <vector>
 #include <iostream>
 void fun1(){
-    std::cout<<hyn::thread::Thread::GetName()<<"  ";
-    std::cout<<hyn::thread::Thread::GetThis()->get_name()<<"  ";
-    std::cout<<hyn::thread::Thread::GetThis()->get_id();
+    std::cout << hyn::thread::Thread::GetName() << "  ";
+    std::cout << hyn::thread::Thread::GetThis()->get_name() << "四代巨大的 ";
+    std::cout << hyn::thread::Thread::GetThis()->get_id();
     error("name: %s",hyn::thread::Thread::GetThis()->get_name().c_str());
     std::cout<<'\n';
     sleep(5);

@@ -13,43 +13,40 @@
 #pragma once
 
 #include <unistd.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <pthread.h>
-#include <boost/config.hpp>
 #include <boost/noncopyable.hpp>
 #include <memory>
-#include <thread>
 #include <functional>
+#include "mutex.h"
 
 namespace hyn::thread {
-    class Thread : public boost::noncopyable {
-    public:
-        typedef std::shared_ptr<Thread> ptr;
 
-        Thread(std::function<void()> cb, const std::string &name);
+class Thread : public boost::noncopyable {
+public:
+    typedef std::shared_ptr<Thread> ptr;
 
-        ~Thread();
+    Thread(std::function<void()> cb, const std::string &name);
 
-        [[nodiscard]] pid_t get_id() const { return m_id; }
+    ~Thread();
 
-        [[nodiscard]]const std::string &get_name() const { return m_name; }
+    [[nodiscard]] pid_t get_id() const { return m_id; }
 
-        void join();
+    [[nodiscard]]const std::string &get_name() const { return m_name; }
 
-        static Thread *GetThis();
+    void join();
 
-        static const std::string &GetName();
+    static Thread *GetThis();
 
-        static void SetName(const std::string &name);
+    static const std::string &GetName();
 
-    private:
-        static void *run(void *arg);
+    static void SetName(const std::string &name);
 
-    private:
-        pid_t m_id = -1;
-        pthread_t m_thread = 0;
-        std::function<void()> m_cb;
-        std::string m_name;
-    };
+private:
+    static void *run(void *arg);
+
+private:
+    pid_t m_id = -1;
+    pthread_t m_thread = 0;
+    std::function<void()> m_cb;
+    std::string m_name;
+};
 }

@@ -63,7 +63,7 @@ void *hyn::thread::Thread::run(void *arg) {
     auto *thread = static_cast<Thread *>(arg);
     t_thread = thread;
     thread->m_id = hyn::util::GetThreadId();
-    pthread_setname_np(pthread_self(),thread->m_name.substr(0,15).c_str());
+    pthread_setname_np(pthread_self(), thread->m_name.substr(0, 15).c_str());
     std::function<void()> cb;
     cb.swap(thread->m_cb);
     cb();

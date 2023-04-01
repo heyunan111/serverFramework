@@ -1,15 +1,12 @@
 /**
   ******************************************************************************
-  * @file           : mutex.h
+  * @file           : my_mutex.h
   * @author         : hyn
   * @brief          : None
   * @attention      : None
   * @date           : 2023/4/1
   ******************************************************************************
   */
-
-
-
 #pragma once
 
 #include "thread.h"
@@ -19,24 +16,297 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <semaphore>
+#include <atomic>
+
+namespace hyn::my_mutex {
 
 /**
- *@类名：Semaphore : noncopyable
- *@参数：m_semaphore
- */
-
-class Semaphore : boost::noncopyable_::noncopyable {
+*@类名：Semaphore : noncopyable
+*@参数：m_semaphore
+*/
+class Semaphore : boost::noncopyable {
 public:
-    Semaphore(uint32_t const = 0);
+    /*
+     *@作用：构造函数
+     *@参数：信号值的大小
+     *@返回值：null
+     */
+    explicit Semaphore(uint32_t count = 0);
 
     ~Semaphore();
 
+    /*
+     *@作用：获取信号量
+     *@参数：null
+     *@返回值：null
+     */
     void wait();
 
+    /*
+     *@作用：释放信号量
+     *@参数：null
+     *@返回值：null
+     */
     void notify();
 
 private:
-    sem_t m_semaphore;
+    sem_t m_semaphore{};
 };
+
+template<class T>
+struct ScopedLockImpl {
+public:
+
+    explicit ScopedLockImpl(T &mutex)
+            : m_mutex(mutex) {
+        m_mutex.lock();
+        m_locked = true;
+    }
+
+
+    ~ScopedLockImpl() {
+        unlock();
+    }
+
+
+    void lock() {
+        if (!m_locked) {
+            m_mutex.lock();
+            m_locked = true;
+        }
+    }
+
+    void unlock() {
+        if (m_locked) {
+            m_mutex.unlock();
+            m_locked = false;
+        }
+    }
+
+private:
+    T &m_mutex;
+    bool m_locked;
+};
+
+/*
+ *@作用：读锁
+ *@参数：null
+ *@返回值：null
+ */
+template<class T>
+struct ReadScopedLockImpl {
+public:
+
+    explicit ReadScopedLockImpl(T &mutex)
+            : m_mutex(mutex) {
+        m_mutex.rdlock();
+        m_locked = true;
+    }
+
+    ~ReadScopedLockImpl() {
+        unlock();
+    }
+
+
+    void lock() {
+        if (!m_locked) {
+            m_mutex.rdlock();
+            m_locked = true;
+        }
+    }
+
+
+    void unlock() {
+        if (m_locked) {
+            m_mutex.unlock();
+            m_locked = false;
+        }
+    }
+
+private:
+    T &m_mutex;
+    bool m_locked;
+};
+
+/*
+ *@作用：写锁
+ *@参数：null
+ *@返回值：null
+ */
+template<class T>
+struct WriteScopedLockImpl {
+public:
+
+    explicit WriteScopedLockImpl(T &mutex)
+            : m_mutex(mutex) {
+        m_mutex.wrlock();
+        m_locked = true;
+    }
+
+
+    ~WriteScopedLockImpl() {
+        unlock();
+    }
+
+
+    void lock() {
+        if (!m_locked) {
+            m_mutex.wrlock();
+            m_locked = true;
+        }
+    }
+
+
+    void unlock() {
+        if (m_locked) {
+            m_mutex.unlock();
+            m_locked = false;
+        }
+    }
+
+private:
+    T &m_mutex;
+    bool m_locked;
+};
+
+
+class Mutex : boost::noncopyable {
+    typedef ScopedLockImpl<Mutex> Lock;
+
+
+    Mutex() {
+        pthread_mutex_init(&m_mutex, nullptr);
+    }
+
+
+    ~Mutex() {
+        pthread_mutex_destroy(&m_mutex);
+    }
+
+
+    void lock() {
+        pthread_mutex_lock(&m_mutex);
+    }
+
+    void unlock() {
+        pthread_mutex_unlock(&m_mutex);
+    }
+
+private:
+    pthread_mutex_t m_mutex{};
+};
+
+class NullMutex : boost::noncopyable {
+public:
+    typedef ScopedLockImpl<NullMutex> Lock;
+
+
+    NullMutex() = default;
+
+    ~NullMutex() = default;
+
+
+    void lock() {}
+
+
+    void unlock() {}
+};
+
+/*
+ *@作用：读写互斥量
+ *@参数：null
+ *@返回值：null
+ */
+class RWMutex : boost::noncopyable {
+
+    typedef ReadScopedLockImpl<RWMutex> ReadLock;
+
+
+    typedef WriteScopedLockImpl<RWMutex> WriteLock;
+
+
+    RWMutex() {
+        pthread_rwlock_init(&m_lock, nullptr);
+    }
+
+
+    ~RWMutex() {
+        pthread_rwlock_destroy(&m_lock);
+    }
+
+    void rdlock() {
+        pthread_rwlock_rdlock(&m_lock);
+    }
+
+    void wrlock() {
+        pthread_rwlock_wrlock(&m_lock);
+    }
+
+    void unlock() {
+        pthread_rwlock_unlock(&m_lock);
+    }
+
+private:
+    pthread_rwlock_t m_lock{};
+};
+
+/*
+ *@作用：自旋锁
+ *@参数：null
+ *@返回值：null
+ */
+class Spinlock : boost::noncopyable {
+public:
+    typedef ScopedLockImpl<Spinlock> Lock;
+
+    Spinlock() {
+        pthread_spin_init(&m_mutex, 0);
+    }
+
+    ~Spinlock() {
+        pthread_spin_destroy(&m_mutex);
+    }
+
+    void lock() {
+        pthread_spin_lock(&m_mutex);
+    }
+
+    void unlock() {
+        pthread_spin_unlock(&m_mutex);
+    }
+
+private:
+    pthread_spinlock_t m_mutex;
+};
+
+/*
+ *@作用：原子锁
+ *@参数：null
+ *@返回值：null
+ */
+class CASLock : boost::noncopyable {
+public:
+    /// 局部锁
+    typedef ScopedLockImpl<CASLock> Lock;
+
+    CASLock() {
+        m_mutex.clear();
+    }
+
+    ~CASLock() {
+    }
+
+    void lock() {
+        while (std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire));
+    }
+
+    void unlock() {
+        std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release);
+    }
+
+private:
+    volatile std::atomic_flag m_mutex;
+};
+}
 
 
