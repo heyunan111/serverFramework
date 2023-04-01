@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sys/socket.h>
+#include "test/thread_test.h"
+
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    test_thread();
 }
