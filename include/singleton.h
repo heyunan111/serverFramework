@@ -12,34 +12,34 @@
 
 namespace hyn ::singleton {
 
-    template<typename T>
-    class Singleton {
+template<typename T>
+class Singleton {
 
-    private:
-        Singleton() = default;
+private:
+    Singleton() = default;
 
-        ~Singleton() = default;
+    ~Singleton() = default;
 
-    public:
+public:
 
-        static T *get_instance() {
-            if (m_instance == nullptr) {
-                m_instance = new T();
-                return m_instance;
-            }
+    static T *get_instance() {
+        if (m_instance == nullptr) {
+            m_instance = new T();
             return m_instance;
         }
+        return m_instance;
+    }
 
-        Singleton(T &&) = delete;
+    Singleton(T &&) = delete;
 
-        Singleton(const T &) = delete;
+    Singleton(const T &) = delete;
 
-        void operator=(const T &) = delete;
+    void operator=(const T &) = delete;
 
-    private:
-        static T *m_instance;
-    };
+private:
+    static T *m_instance;
+};
 
-    template<typename T>
-    T *Singleton<T>::m_instance;
+template<typename T>
+T *Singleton<T>::m_instance;
 }

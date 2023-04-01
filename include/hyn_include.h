@@ -7,12 +7,8 @@
   * @date           : 2023/4/1
   ******************************************************************************
   */
-
-
-
 #pragma once
 
-#include "config.h"
 #include "exceptdef.h"
 #include "fiber.h"
 #include "Logger.h"
@@ -20,3 +16,4 @@
 #include "singleton.h"
 #include "thread.h"
 #include "util.h"
+
