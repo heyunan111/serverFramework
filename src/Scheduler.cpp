@@ -69,7 +69,6 @@ void Scheduler::stop() {
     if (stopping()) {
         return;
     }
-    bool exit_on_this_fiber = false;
     if (m_root_thread_id != -1) {
         assert(GetThis() == this);
     } else {
@@ -79,7 +78,14 @@ void Scheduler::stop() {
     for (int i = 0; i < m_thread_count; ++i) {
         tickle();
     }
-
+    if (m_root_fiber) {
+        tickle();
+    }
+    if (m_root_fiber) {
+        if (!stopping()) {
+            m_root_fiber->call();
+        }
+    }
 }
 
 Scheduler *Scheduler::GetThis() {
@@ -95,10 +101,48 @@ void Scheduler::tickle() {
 }
 
 void Scheduler::run() {
-
+    SetThis();
+    if (util::GetThreadId() != m_root_thread_id) {
+        t_fiber = fiber::Fiber::GetThis().get();
+    }
+    fiber::Fiber::ptr idle_fiber(new fiber::Fiber([this] { idle(); }));
+    fiber::Fiber::ptr cb_fiber;
+    Task task;
+    while (true) {
+        task.reset();
+        bool tickle_me = false;
+        {
+            mutexType::Lock lock(m_mutex);
+            auto it = m_fibers.begin();
+            while (it != m_fibers.end()) {
+                if (it->thread != -1 && it->thread != util::GetThreadId()) {
+                    ++it;
+                    tickle_me = true;
+                    continue;
+                }
+                assert(it->fiber || it->cb);
+                if (it->fiber && it->fiber->get_state() == fiber::Fiber::EXEC) {
+                    ++it;
+                    continue;
+                }
+                task = *it;
+                m_fibers.erase(it++);
+            }
+        }
+    }
 }
 
 bool Scheduler::stopping() {
 
 }
+
+void Scheduler::SetThis() {
+
+}
+
+void Scheduler::idle() {
+
+}
+
+
 } // Scheduler

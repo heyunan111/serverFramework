@@ -103,7 +103,7 @@ protected:
     virtual void tickle();
 
     /**
-     *@作用：写成调度器
+     *@作用：协程调度器
      *@参数：null
      *@返回值：null
      */
@@ -115,6 +115,21 @@ protected:
      *@返回值：bool
      */
     virtual bool stopping();
+
+
+    /**
+     *@作用：设置当前协程调度器
+     *@参数：null
+     *@返回值：null
+     */
+    void SetThis();
+
+    /**
+     *@作用：协程无任务时执行idle
+     *@参数：null
+     *@返回值：null
+     */
+    virtual void idle();
 
 private:
     /**
