@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file           : my_mutex.h
+  * @file           : mutex.h
   * @author         : hyn
   * @brief          : None
   * @attention      : None
@@ -18,7 +18,7 @@
 #include <semaphore>
 #include <atomic>
 
-namespace hyn::my_mutex {
+namespace hyn::mutex {
 
 /**
 *@类名：Semaphore : noncopyable
@@ -171,6 +171,7 @@ private:
 
 
 class Mutex : boost::noncopyable {
+public:
     typedef ScopedLockImpl<Mutex> Lock;
 
 

@@ -18,7 +18,7 @@
 
 namespace hyn::fiber {
 
-/*
+/**
 uc_link主要指向的是当前上下文返回之后指向的上下文
 uc_mcontext主要是保存一些寄存器
 uc_sigmask主要保存阻塞信号量集
@@ -61,28 +61,28 @@ public:
 
     ~Fiber();
 
-    /*
+    /**
      *@作用：重置协程函数，并重置状态
      *@参数：null
      *@返回值：null
      */
     void reset(const std::function<void()> &cb);
 
-    /*
+    /**
      *@作用：切换到当前协程
      *@参数：null
      *@返回值：null
      */
     void swap_in();
 
-    /*
+    /**
      *@作用：切换到后台执行
      *@参数：null
      *@返回值：null
      */
     void swap_out();
 
-    /*
+    /**
      *@作用：获取协程id
      *@参数：null
      *@返回值：id
@@ -91,7 +91,7 @@ public:
         return m_id;
     }
 
-    /*
+    /**
      *@作用：获取协程状态
      *@参数：null
      *@返回值：状态
@@ -100,28 +100,28 @@ public:
         return m_state;
     }
 
-    /*
+    /**
      *@作用：换入协程。将调用时的上下挂起保存到线程局部变量中
      *@参数：null
      *@返回值：null
      */
     void call();
 
-    /*
+    /**
      *@作用：挂起协程，保存当前上下文到协程对象中，从线程局部变量恢复执行上下文
      *@参数：null
      *@返回值：null
      */
     void back();
 
-    /*
+    /**
      *@作用：换入协程
      *@参数：存储当前协程上下文信息的指针
      *@返回值：null
      */
     void swap_in(const Fiber::ptr &fiber);
 
-    /*
+    /**
      *@作用：挂起协程
      *@参数：要恢复的协程
      *@返回值：null
@@ -129,49 +129,49 @@ public:
     void swap_out(const Fiber::ptr &fiber1);
 
 public:
-    /*
+    /**
      *@作用：设置当前协程
      *@参数：null
      *@返回值：null
      */
     static void SetThis(Fiber *f);
 
-    /*
+    /**
      *@作用：返回当前协程
      *@参数：null
      *@返回值：std::shared_ptr<Fiber>
      */
     static Fiber::ptr GetThis();
 
-    /*
+    /**
      *@作用：切换到后台，并设为ready
      *@参数：null
      *@返回值：null
      */
     static void YieldToReady();
 
-    /*
+    /**
      *@作用：切换到后台并设置为hold
      *@参数：null
      *@返回值：null
      */
     static void YieldToHold();
 
-    /*
+    /**
      *@作用：总协程数量
      *@参数：null
      *@返回值：null
      */
     static uint64_t TotalFibers();
 
-    /*
+    /**
      *@作用：协程执行函数，执行完成返回到线程调度协程
      *@参数：null
      *@返回值：null
      */
     static void MainFunc();
 
-    /*
+    /**
      *@作用：获取协程id
      *@参数：null
      *@返回值：id

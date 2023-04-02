@@ -12,7 +12,6 @@
 #include "exceptdef.h"
 #include "fiber.h"
 #include "Logger.h"
-#include "macro.h"
 #include "singleton.h"
 #include "thread.h"
 #include "util.h"
