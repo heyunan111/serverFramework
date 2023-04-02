@@ -1,7 +1,7 @@
 #include <iostream>
 #include <sys/socket.h>
-#include "test/thread_test.h"
+#include "test/test_fiber.h"
 
 int main() {
-    test_thread();
+    test_fiber();
 }

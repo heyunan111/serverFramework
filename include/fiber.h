@@ -52,10 +52,12 @@ public:
         READY,      // 可执行状态
         EXCEPT      // 异常状态
     };
-public:
+private:
     Fiber();
 
-    Fiber(std::function<void()> cb, size_t stacksize = 0);
+public:
+
+    explicit Fiber(std::function<void()> cb, size_t stacksize = 0);
 
     ~Fiber();
 
@@ -97,6 +99,34 @@ public:
     State get_state() const {
         return m_state;
     }
+
+    /*
+     *@作用：换入协程。将调用时的上下挂起保存到线程局部变量中
+     *@参数：null
+     *@返回值：null
+     */
+    void call();
+
+    /*
+     *@作用：挂起协程，保存当前上下文到协程对象中，从线程局部变量恢复执行上下文
+     *@参数：null
+     *@返回值：null
+     */
+    void back();
+
+    /*
+     *@作用：换入协程
+     *@参数：存储当前协程上下文信息的指针
+     *@返回值：null
+     */
+    void swap_in(const Fiber::ptr &fiber);
+
+    /*
+     *@作用：挂起协程
+     *@参数：要恢复的协程
+     *@返回值：null
+     */
+    void swap_out(const Fiber::ptr &fiber1);
 
 public:
     /*
@@ -156,11 +186,10 @@ private:
     /// 协程状态
     State m_state = INIT;
     // 协程上下文
-    ucontext_t m_ctx;
+    ucontext_t m_ctx{};
     // 协程运行栈指针
     void *m_stack = nullptr;
     // 协程运行函数
     std::function<void()> m_cb;
-
 };
 }
