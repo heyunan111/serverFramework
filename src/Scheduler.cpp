@@ -79,9 +79,7 @@ void Scheduler::stop() {
     for (int i = 0; i < m_thread_count; ++i) {
         tickle();
     }
-    if (exit_on_this_fiber) {
 
-    }
 }
 
 Scheduler *Scheduler::GetThis() {

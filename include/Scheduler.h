@@ -38,8 +38,18 @@ public:
 
     [[nodiscard]] const std::string &get_name() const { return m_name; }
 
+    /**
+     *@作用：启动写成调度器
+     *@参数：null
+     *@返回值：null
+     */
     void start();
 
+    /**
+     *@作用：停止协调调度器
+     *@参数：null
+     *@返回值：null
+     */
     void stop();
 
     /**
@@ -85,10 +95,25 @@ public:
     static fiber::Fiber *GetMainFiber();
 
 protected:
+    /**
+     *@作用：通知协程调度器有任务
+     *@参数：null
+     *@返回值：null
+     */
     virtual void tickle();
 
+    /**
+     *@作用：写成调度器
+     *@参数：null
+     *@返回值：null
+     */
     void run();
 
+    /**
+     *@作用：判断是否可以停止
+     *@参数：null
+     *@返回值：bool
+     */
     virtual bool stopping();
 
 private:
@@ -139,19 +164,19 @@ private:
     };
 
 protected:
-    std::vector<int> m_thread_ids;
-    size_t m_thread_count{0};
-    size_t m_active_thread_count{0};
-    size_t m_idle_thread_count{0};
-    bool m_stopping{true};
-    bool m_auto_stop{false};
-    int m_root_thread_id{0};
+    std::vector<int> m_thread_ids;      //协程id数组
+    size_t m_thread_count{0};           //线程数
+    size_t m_active_thread_count{0};    //工作线程数
+    size_t m_idle_thread_count{0};      //空闲线程数
+    bool m_stopping{true};              //是否正在停止
+    bool m_auto_stop{false};            //是否自动停止
+    int m_root_thread_id{0};            //主线程id
 private:
     mutexType m_mutex;
-    std::vector<thread::Thread::ptr> m_threads;
-    std::list<Task> m_fibers;
-    std::string m_name;
-    fiber::Fiber::ptr m_root_fiber;
+    std::vector<thread::Thread::ptr> m_threads;     //线程池
+    std::list<Task> m_fibers;                       //待执行的协程队列
+    std::string m_name;                             //协程调度器名称
+    fiber::Fiber::ptr m_root_fiber;                 //use_caller为true有效，调度协程
 };
 
 } // Scheduler
