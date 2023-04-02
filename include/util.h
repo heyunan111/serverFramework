@@ -15,7 +15,7 @@
 namespace hyn::util {
     pid_t GetThreadId();
 
-    uint32_t get_fiber_if();
+    uint64_t get_fiber_id();
 
     void backtrace(std::vector<std::string> &bt, int size, int skip = 1);
 

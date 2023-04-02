@@ -14,8 +14,7 @@
 
 #include "../include/util.h"
 #include "../include/Logger.h"
-
-
+#include "../include/fiber.h"
 pid_t hyn::util::GetThreadId() {
     return syscall(SYS_gettid);
 }
@@ -44,4 +43,10 @@ std::string hyn::util::backtrace_to_string(int size, int skip, const std::string
     }
     return ss.str();
 }
+
+uint64_t hyn::util::get_fiber_id() {
+    return hyn::fiber::Fiber::GetFiberId();
+}
+
+
 
