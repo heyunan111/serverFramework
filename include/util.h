@@ -20,5 +20,5 @@ namespace hyn::util {
 
     void backtrace(std::vector<std::string> &bt, int size, int skip = 1);
 
-    std::string backtrace_to_string(int size, int skip = 2, const std::string &prefix = "");
+    std::string backtrace_to_string(int size = 64, int skip = 2, const std::string &prefix = "");
 }

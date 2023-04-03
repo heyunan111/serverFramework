@@ -179,19 +179,30 @@ private:
     };
 
 protected:
-    std::vector<int> m_thread_ids;      //协程id数组
-    size_t m_thread_count{0};           //线程数
-    std::atomic<size_t> m_active_thread_count{0};    //工作线程数
-    std::atomic<size_t> m_idle_thread_count{0};      //空闲线程数
-    bool m_stopping{true};              //是否正在停止
-    bool m_auto_stop{false};            //是否自动停止
-    int m_root_thread_id{0};            //主线程id
+    ///协程id数组
+    std::vector<int> m_thread_ids;
+    ///线程数
+    size_t m_thread_count{0};
+    ///工作线程数
+    std::atomic<size_t> m_active_thread_count{0};
+    ///空闲线程数
+    std::atomic<size_t> m_idle_thread_count{0};
+    ///是否正在停止
+    bool m_stopping{true};
+    ///是否自动停止
+    bool m_auto_stop{false};
+    ///主线程id
+    int m_root_thread_id{0};
 private:
     mutexType m_mutex;
-    std::vector<thread::Thread::ptr> m_threads;     //线程池
-    std::list<Task> m_fibers;                       //待执行的协程队列
-    std::string m_name;                             //协程调度器名称
-    fiber::Fiber::ptr m_root_fiber;                 //use_caller为true有效，调度协程
+    ///线程池
+    std::vector<thread::Thread::ptr> m_threads;
+    ///待执行的协程队列
+    std::list<Task> m_fibers;
+    ///协程调度器名称
+    std::string m_name;
+    ///use_caller为true有效，调度协程
+    fiber::Fiber::ptr m_root_fiber;
 };
 
 } // Scheduler

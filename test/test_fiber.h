@@ -13,7 +13,7 @@
 #pragma once
 
 #include <iostream>
-#include "../include/hyn_include.h"
+#include "../hyn_include.h"
 
 void run_in_f() {
     std::cout << "run in f begin \n";

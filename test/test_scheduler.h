@@ -13,13 +13,14 @@
 #ifndef SERVERFRAMEWORK_TEST_SCHEDULER_H
 #define SERVERFRAMEWORK_TEST_SCHEDULER_H
 
-#include "../include/hyn_include.h"
+#include "../hyn_include.h"
 #include <iostream>
 
 void test_sch() {
 
 
     hyn::scheduler::Scheduler sc;
+    sc.start();
     sc.stop();
 
 

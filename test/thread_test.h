@@ -13,7 +13,7 @@
 #ifndef SERVERFRAMEWORK_THREAD_TEST_H
 #define SERVERFRAMEWORK_THREAD_TEST_H
 
-#include "../include/hyn_include.h"
+#include "../hyn_include.h"
 
 #include <vector>
 #include <iostream>

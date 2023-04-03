@@ -26,7 +26,7 @@ Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name) : 
         --thread;
         assert(GetThis() == nullptr);
         t_scheduler = this;
-        m_root_fiber.reset(new fiber::Fiber([this] { run(); }));
+        m_root_fiber.reset(new fiber::Fiber([this] { run(); }, 0, true));
         thread::Thread::SetName(name);
         t_fiber = m_root_fiber.get();
         m_root_thread_id = util::GetThreadId();
@@ -58,8 +58,12 @@ void Scheduler::start() {
         m_thread_ids.push_back(m_threads[i]->get_id());
     }
     lock.unlock();
-    if (m_root_fiber)
-        m_root_fiber->swap_in();
+//    if (m_root_fiber) {
+//        debug("start call");
+//        m_root_fiber->call();
+//
+//    }
+
 }
 
 void Scheduler::stop() {
@@ -112,7 +116,7 @@ void Scheduler::tickle() {
  *      无任务，执行idle
  * */
 void Scheduler::run() {
-    debug("scheduler run");
+    debug("scheduler run name:%s", m_name.c_str());
     SetThis();  //把当前线程的schedule置为他自己
     if (util::GetThreadId() != m_root_thread_id) {
         //如果线程id != 主线程id，协程就等于主线程的协程
@@ -124,6 +128,7 @@ void Scheduler::run() {
     while (true) {
         task.reset();
         bool tickle_me = false;
+        bool is_active = true;
         { //从消息队列取出一个应该要执行任务
             mutexType::Lock lock(m_mutex);
             auto it = m_fibers.begin();
@@ -142,7 +147,7 @@ void Scheduler::run() {
                 }
                 //把任务拿出来
                 task = *it;
-                m_fibers.erase(it++);
+                m_fibers.erase(it);
             }
         }
 
@@ -191,6 +196,7 @@ void Scheduler::run() {
         } else {
 
             if (idle_fiber->get_state() == fiber::Fiber::TERM) {
+                info("idle fiber term");
                 break;
             }
 
@@ -198,7 +204,7 @@ void Scheduler::run() {
             idle_fiber->swap_in();
             --m_idle_thread_count;
 
-            if (idle_fiber->get_state() != fiber::Fiber::TERM ||
+            if (idle_fiber->get_state() != fiber::Fiber::TERM &&
                 idle_fiber->get_state() != fiber::Fiber::EXCEPT) {
                 idle_fiber->set_m_state(fiber::Fiber::HOLD);
             }
@@ -217,6 +223,9 @@ void Scheduler::SetThis() {
 
 void Scheduler::idle() {
     debug("idle");
+    while (!stopping()) {
+        fiber::Fiber::YieldToHold();
+    }
 }
 
 

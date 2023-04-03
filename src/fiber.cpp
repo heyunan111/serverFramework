@@ -9,11 +9,13 @@
   */
 #include <atomic>
 #include <utility>
+#include <iostream>
 
 #include "../include/fiber.h"
 #include "../include/Logger.h"
 #include "../include/iniFile.h"
 #include "../include/Scheduler.h"
+#include "../include/util.h"
 static std::atomic<uint64_t> s_fiber_id{0};
 static std::atomic<uint64_t> s_fiber_count{0};
 static thread_local hyn::fiber::Fiber *t_fiber = nullptr;
@@ -56,7 +58,7 @@ hyn::fiber::Fiber::Fiber() {
     }
     ++s_fiber_count;
 
-    debug("Fiber::Fiber");
+    debug("Fiber::Fiber main");
 }
 /*
     typedef struct ucontext_t
@@ -70,8 +72,10 @@ hyn::fiber::Fiber::Fiber() {
     __extension__ unsigned long long int __ssp[4];
     } ucontext_t;
 */
-hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize) : m_id(++s_fiber_id), m_cb(std::move(cb)),
-                                                                       m_ctx(), m_state(INIT), m_stack(nullptr) {
+hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller) : m_id(++s_fiber_id),
+                                                                                        m_cb(std::move(cb)),
+                                                                                        m_ctx(), m_state(INIT),
+                                                                                        m_stack(nullptr) {
     m_stacksize = stacksize ? stacksize : 131072;
     m_stack = StackAlloc::Alloc(m_stacksize);
     // 获取上下文对象的副本
@@ -83,9 +87,14 @@ hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize) : m_id(++s_
     m_ctx.uc_link = nullptr;
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_size = m_stacksize;
-    makecontext(&m_ctx, &Fiber::MainFunc, 0);
 
-    debug("Fiber::Fiber id : ", m_id);
+    if (!use_caller) {
+        makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    } else {
+        makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
+    }
+
+    debug("Fiber::Fiber id : %d", m_id);
 }
 
 hyn::fiber::Fiber::~Fiber() {
@@ -96,11 +105,13 @@ hyn::fiber::Fiber::~Fiber() {
     } else {
         assert(!m_cb);
         assert(m_state == EXEC);
-        if (t_fiber == this) {
+        Fiber *cur = t_fiber;
+        if (cur == this) {
             SetThis(nullptr);
         }
     }
-    debug("Fiber:~Fiber");
+    debug("Fiber:~Fiber id:%d", m_id);
+    std::cout << "Fiber:~Fiber id:" << m_id << '\n';
 }
 
 void hyn::fiber::Fiber::reset(const std::function<void()> &cb) {
@@ -134,7 +145,7 @@ void hyn::fiber::Fiber::swap_out() {
 }
 
 hyn::fiber::Fiber::ptr hyn::fiber::Fiber::GetThis() {
-    if (t_fiber != nullptr) {
+    if (t_fiber) {
         return t_fiber->shared_from_this();
     }
     Fiber::ptr main_fiber(new Fiber);
@@ -162,10 +173,12 @@ void hyn::fiber::Fiber::MainFunc() {
         cur->m_state = TERM;
     } catch (std::exception &exception) {
         cur->m_state = EXCEPT;
-        info("Fiber EXCEPT %s : ", exception.what());
+        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->get_id(),
+             hyn::util::backtrace_to_string().c_str());
     } catch (...) {
         cur->m_state = EXCEPT;
-        info("Fiber EXCEPT");
+        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->get_id(),
+             hyn::util::backtrace_to_string().c_str());
     }
     auto raw_ptr = cur.get();
     cur.reset();
@@ -178,7 +191,8 @@ void hyn::fiber::Fiber::SetThis(Fiber *f) {
 
 void hyn::fiber::Fiber::YieldToHold() {
     Fiber::ptr cur = GetThis();
-    cur->m_state = HOLD;
+    assert(cur->m_state == EXEC);
+    //cur->m_state = HOLD;
     cur->swap_out();
 }
 
@@ -189,8 +203,6 @@ uint64_t hyn::fiber::Fiber::GetFiberId() {
 }
 
 void hyn::fiber::Fiber::call() {
-    assert(t_threadFiber && "当前不存在主协程");
-    assert(m_state == INIT || m_state == READY || m_state == HOLD);
     SetThis(this);
     m_state = EXEC;
     if (swapcontext(&(t_threadFiber->m_ctx), &m_ctx)) {
@@ -200,8 +212,6 @@ void hyn::fiber::Fiber::call() {
 }
 
 void hyn::fiber::Fiber::back() {
-    assert(t_threadFiber && "当前线程不存在主协程");
-    assert(m_stack);
     SetThis(t_threadFiber.get());
     if (swapcontext(&m_ctx, &(t_threadFiber->m_ctx))) {
         info("back error");
@@ -230,6 +240,27 @@ void hyn::fiber::Fiber::swap_out(const hyn::fiber::Fiber::ptr &fiber1) {
 
 void hyn::fiber::Fiber::set_m_state(State mState) {
     m_state = mState;
+}
+
+void hyn::fiber::Fiber::CallerMainFunc() {
+    Fiber::ptr cur = GetThis();
+    assert(cur);
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch (std::exception &exception) {
+        cur->m_state = EXCEPT;
+        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->get_id(),
+             hyn::util::backtrace_to_string().c_str());
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->get_id(),
+             hyn::util::backtrace_to_string().c_str());
+    }
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->back();
 }
 
 

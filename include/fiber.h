@@ -57,7 +57,7 @@ private:
 
 public:
 
-    explicit Fiber(std::function<void()> cb, size_t stacksize = 0);
+    explicit Fiber(std::function<void()> cb, size_t stacksize = 0, bool use_caller = false);
 
     ~Fiber();
 
@@ -172,28 +172,39 @@ public:
     static void MainFunc();
 
     /**
+     *@作用：协程执行函数，执行完成返回到线程调度协程
+     *@参数：null
+     *@返回值：null
+     */
+    static void CallerMainFunc();
+
+    /**
      *@作用：获取协程id
      *@参数：null
      *@返回值：id
      */
     static uint64_t GetFiberId();
 
-private:
-    //id
-    uint64_t m_id = 0;
-    //协程运行栈大小
-    uint32_t m_stacksize = 0;
-    /// 协程状态
-    State m_state = INIT;
-public:
+    /**
+     *@作用：设置state
+     *@参数：状态
+     *@返回值：null
+     */
     void set_m_state(State mState);
 
 private:
-    // 协程上下文
+    ///id
+    uint64_t m_id = 0;
+    ///协程运行栈大小
+    uint32_t m_stacksize = 0;
+    /// 协程状态
+    State m_state = INIT;
+private:
+    /// 协程上下文
     ucontext_t m_ctx{};
-    // 协程运行栈指针
+    /// 协程运行栈指针
     void *m_stack = nullptr;
-    // 协程运行函数
+    /// 协程运行函数
     std::function<void()> m_cb;
 };
 }
