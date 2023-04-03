@@ -134,7 +134,7 @@ void Scheduler::tickle() {
  *      无任务，执行idle
  * */
 void Scheduler::run() {
-    debug("scheduler run name:%s", m_name.c_str());
+    //debug("scheduler run name:%s", m_name.c_str());
     SetThis();  //把当前线程的schedule置为他自己
     if (util::GetThreadId() != m_root_thread_id) {
         //如果线程id != 主线程id，协程就等于主线程的协程
