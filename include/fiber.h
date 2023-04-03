@@ -114,20 +114,6 @@ public:
      */
     void back();
 
-    /**
-     *@作用：换入协程
-     *@参数：存储当前协程上下文信息的指针
-     *@返回值：null
-     */
-    void swap_in(const Fiber::ptr &fiber);
-
-    /**
-     *@作用：挂起协程
-     *@参数：要恢复的协程
-     *@返回值：null
-     */
-    void swap_out(const Fiber::ptr &fiber1);
-
 public:
     /**
      *@作用：设置当前协程

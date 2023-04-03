@@ -16,6 +16,8 @@
 #include "../include/iniFile.h"
 #include "../include/Scheduler.h"
 #include "../include/util.h"
+
+
 static std::atomic<uint64_t> s_fiber_id{0};
 static std::atomic<uint64_t> s_fiber_count{0};
 static thread_local hyn::fiber::Fiber *t_fiber = nullptr;
@@ -76,6 +78,7 @@ hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_ca
                                                                                         m_cb(std::move(cb)),
                                                                                         m_ctx(), m_state(INIT),
                                                                                         m_stack(nullptr) {
+    ++s_fiber_count;
     m_stacksize = stacksize ? stacksize : 131072;
     m_stack = StackAlloc::Alloc(m_stacksize);
     // 获取上下文对象的副本
@@ -111,7 +114,7 @@ hyn::fiber::Fiber::~Fiber() {
         }
     }
     debug("Fiber:~Fiber id:%d", m_id);
-    std::cout << "Fiber:~Fiber id:" << m_id << '\n';
+    //std::cout << "Fiber:~Fiber id:" << m_id << '\n';
 }
 
 void hyn::fiber::Fiber::reset(const std::function<void()> &cb) {
@@ -213,30 +216,12 @@ void hyn::fiber::Fiber::call() {
 
 void hyn::fiber::Fiber::back() {
     SetThis(t_threadFiber.get());
-    if (swapcontext(&m_ctx, &(t_threadFiber->m_ctx))) {
+    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
         info("back error");
         THROW_RUNTIME_ERROR_IF(1, "back error");
     }
 }
 
-void hyn::fiber::Fiber::swap_in(const hyn::fiber::Fiber::ptr &fiber) {
-    assert(m_state == INIT || m_state == READY || m_state == HOLD);
-    SetThis(this);
-    m_state = EXEC;
-    if (swapcontext(&(fiber->m_ctx), &m_ctx)) {
-        info("swap_in (fiber) error");
-        THROW_RUNTIME_ERROR_IF(1, "swap_in (fiber) error");
-    }
-}
-
-void hyn::fiber::Fiber::swap_out(const hyn::fiber::Fiber::ptr &fiber1) {
-    assert(m_state);
-    SetThis(fiber1.get());
-    if (swapcontext(&m_ctx, &(fiber1->m_ctx))) {
-        info("swap_out (fiber) error");
-        THROW_RUNTIME_ERROR_IF(1, "swap_out (fiber) error");
-    }
-}
 
 void hyn::fiber::Fiber::set_m_state(State mState) {
     m_state = mState;

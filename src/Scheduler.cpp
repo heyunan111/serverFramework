@@ -58,6 +58,7 @@ void Scheduler::start() {
         m_thread_ids.push_back(m_threads[i]->get_id());
     }
     lock.unlock();
+
 //    if (m_root_fiber) {
 //        debug("start call");
 //        m_root_fiber->call();
@@ -74,26 +75,43 @@ void Scheduler::stop() {
         info("fiber stop");
         m_stopping = true;
     }
+
     if (stopping()) {
         return;
     }
+
     if (m_root_thread_id != -1) {
         assert(GetThis() == this);
     } else {
         assert(GetThis() != this);
     }
+
     m_stopping = true;
     for (int i = 0; i < m_thread_count; ++i) {
         tickle();
     }
+
     if (m_root_fiber) {
         tickle();
     }
+
     if (m_root_fiber) {
         if (!stopping()) {
             m_root_fiber->call();
         }
     }
+
+    std::vector<thread::Thread::ptr> thrs;
+
+    {
+        mutexType::Lock lock(m_mutex);
+        thrs.swap(m_threads);
+    }
+
+    for (auto &i: thrs) {
+        i->join();
+    }
+
 }
 
 Scheduler *Scheduler::GetThis() {
@@ -128,8 +146,8 @@ void Scheduler::run() {
     while (true) {
         task.reset();
         bool tickle_me = false;
-        bool is_active = true;
-        { //从消息队列取出一个应该要执行任务
+        bool is_active = false;
+        {
             mutexType::Lock lock(m_mutex);
             auto it = m_fibers.begin();
             while (it != m_fibers.end()) {
@@ -147,18 +165,22 @@ void Scheduler::run() {
                 }
                 //把任务拿出来
                 task = *it;
-                m_fibers.erase(it);
+                m_fibers.erase(it++);
+                ++m_active_thread_count;
+                is_active = true;
+                break;
             }
+            tickle_me |= it != m_fibers.end();
+
         }
 
         if (tickle_me) {
             tickle();
         }
 
-        if (task.fiber && task.fiber->get_state() != fiber::Fiber::TERM ||
+        if (task.fiber && task.fiber->get_state() != fiber::Fiber::TERM &&
             task.fiber->get_state() != fiber::Fiber::EXCEPT) {
             //如果是协程
-            ++m_active_thread_count;
             task.fiber->swap_in();
             --m_active_thread_count;
 
@@ -179,12 +201,12 @@ void Scheduler::run() {
             }
 
             task.reset();
-            ++m_active_thread_count;
             cb_fiber->swap_in();
             --m_active_thread_count;
 
             if (cb_fiber->get_state() == fiber::Fiber::READY) {
                 schedule(cb_fiber);
+                cb_fiber.reset();
             } else if (cb_fiber->get_state() == fiber::Fiber::EXCEPT ||
                        cb_fiber->get_state() == fiber::Fiber::TERM) {
                 cb_fiber->reset(nullptr);
@@ -194,6 +216,11 @@ void Scheduler::run() {
             }
 
         } else {
+
+            if (is_active) {
+                --m_active_thread_count;
+                continue;
+            }
 
             if (idle_fiber->get_state() == fiber::Fiber::TERM) {
                 info("idle fiber term");
@@ -218,7 +245,7 @@ bool Scheduler::stopping() {
 }
 
 void Scheduler::SetThis() {
-
+    t_scheduler = this;
 }
 
 void Scheduler::idle() {
