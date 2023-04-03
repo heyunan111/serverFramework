@@ -12,7 +12,11 @@
 #include "exceptdef.h"
 #include "fiber.h"
 #include "Logger.h"
+#include "iniFile.h"
+#include "mutex.h"
+#include "Scheduler.h"
 #include "singleton.h"
 #include "thread.h"
 #include "util.h"
+
 

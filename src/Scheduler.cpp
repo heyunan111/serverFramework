@@ -96,7 +96,7 @@ fiber::Fiber *Scheduler::GetMainFiber() {
 }
 
 void Scheduler::tickle() {
-
+    debug("tickle");
 }
 
 /*
@@ -201,7 +201,8 @@ void Scheduler::run() {
 }
 
 bool Scheduler::stopping() {
-    return false;
+    mutexType::Lock lock(m_mutex);
+    return m_auto_stop && m_stopping && m_fibers.empty() && m_active_thread_count == 0;
 }
 
 void Scheduler::SetThis() {
@@ -209,7 +210,7 @@ void Scheduler::SetThis() {
 }
 
 void Scheduler::idle() {
-
+    debug("idle");
 }
 
 
