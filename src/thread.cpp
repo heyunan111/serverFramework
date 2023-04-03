@@ -25,12 +25,12 @@ hyn::thread::Thread::Thread(std::function<void()> cb, const std::string &name):m
               rt, name.c_str());
         THROW_RUNTIME_ERROR_IF(1, "pthread_create error");
     }
+    m_semaphore.wait();
 }
 
 hyn::thread::Thread::~Thread() {
     if (m_thread) {
         pthread_detach(m_thread);
-
     }
 }
 
@@ -54,6 +54,8 @@ const std::string &hyn::thread::Thread::GetName() {
 }
 
 void hyn::thread::Thread::SetName(const std::string &name) {
+    if (name.empty())
+        return;
     if (t_thread)
         t_thread->m_name = name;
     t_thread_name = name;
@@ -62,10 +64,12 @@ void hyn::thread::Thread::SetName(const std::string &name) {
 void *hyn::thread::Thread::run(void *arg) {
     auto *thread = static_cast<Thread *>(arg);
     t_thread = thread;
+    t_thread_name = thread->m_name;
     thread->m_id = hyn::util::GetThreadId();
     pthread_setname_np(pthread_self(), thread->m_name.substr(0, 15).c_str());
     std::function<void()> cb;
     cb.swap(thread->m_cb);
+    thread->m_semaphore.notify();
     cb();
     return nullptr;
 }

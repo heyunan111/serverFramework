@@ -13,7 +13,7 @@
 #include "../include/fiber.h"
 #include "../include/Logger.h"
 #include "../include/iniFile.h"
-
+#include "../include/Scheduler.h"
 static std::atomic<uint64_t> s_fiber_id{0};
 static std::atomic<uint64_t> s_fiber_count{0};
 static thread_local hyn::fiber::Fiber *t_fiber = nullptr;
@@ -119,15 +119,15 @@ void hyn::fiber::Fiber::swap_in() {
     SetThis(this);
     assert(m_state == INIT || m_state == READY || m_state == HOLD);
     m_state = EXEC;
-    if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+    if (swapcontext(&scheduler::Scheduler::GetMainFiber()->m_ctx, &m_ctx)) {
         error("swap context");
         THROW_RUNTIME_ERROR_IF(1, "swap context");
     }
 }
 
 void hyn::fiber::Fiber::swap_out() {
-    SetThis(t_threadFiber.get());
-    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
+    SetThis(scheduler::Scheduler::GetMainFiber());
+    if (swapcontext(&m_ctx, &scheduler::Scheduler::GetMainFiber()->m_ctx)) {
         error("swap out");
         THROW_RUNTIME_ERROR_IF(1, "swap out");
     }

@@ -45,6 +45,7 @@ Scheduler::~Scheduler() {
 }
 
 void Scheduler::start() {
+    debug("scheduler start");
     mutexType::Lock lock(m_mutex);
     if (!m_stopping) {
         return;
@@ -56,9 +57,13 @@ void Scheduler::start() {
         m_threads[i].reset(new thread::Thread([this] { run(); }, m_name + '_' + std::to_string(i)));
         m_thread_ids.push_back(m_threads[i]->get_id());
     }
+    lock.unlock();
+    if (m_root_fiber)
+        m_root_fiber->swap_in();
 }
 
 void Scheduler::stop() {
+    debug("scheduler stop");
     m_auto_stop = true;
     if (m_root_fiber && m_thread_count == 0 &&
         (m_root_fiber->get_state() == fiber::Fiber::TERM || m_root_fiber->get_state() == fiber::Fiber::INIT)) {
@@ -107,6 +112,7 @@ void Scheduler::tickle() {
  *      无任务，执行idle
  * */
 void Scheduler::run() {
+    debug("scheduler run");
     SetThis();  //把当前线程的schedule置为他自己
     if (util::GetThreadId() != m_root_thread_id) {
         //如果线程id != 主线程id，协程就等于主线程的协程

@@ -25,13 +25,15 @@ hyn::mutex::Semaphore::~Semaphore() {
 }
 
 void hyn::mutex::Semaphore::wait() {
-    if (!sem_wait(&m_semaphore))
-        return;
+    if (sem_wait(&m_semaphore)) {
+        fatal("sem wait error");
+        THROW_RUNTIME_ERROR_IF(1, "sem wait error");
+    }
 }
 
 void hyn::mutex::Semaphore::notify() {
-    if (!sem_post(&m_semaphore)) {
-        error("sem post error");
+    if (sem_post(&m_semaphore)) {
+        fatal("sem post error");
         THROW_RUNTIME_ERROR_IF(1, "sem post error");
     }
 }

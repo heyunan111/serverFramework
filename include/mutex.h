@@ -9,7 +9,6 @@
   */
 #pragma once
 
-#include "thread.h"
 
 #include <boost/noncopyable.hpp>
 #include <functional>
@@ -197,22 +196,6 @@ private:
     pthread_mutex_t m_mutex{};
 };
 
-class NullMutex : boost::noncopyable {
-public:
-    typedef ScopedLockImpl<NullMutex> Lock;
-
-
-    NullMutex() = default;
-
-    ~NullMutex() = default;
-
-
-    void lock() {}
-
-
-    void unlock() {}
-};
-
 /*
  *@作用：读写互斥量
  *@参数：null
@@ -250,63 +233,4 @@ class RWMutex : boost::noncopyable {
 private:
     pthread_rwlock_t m_lock{};
 };
-
-/*
- *@作用：自旋锁
- *@参数：null
- *@返回值：null
- */
-class Spinlock : boost::noncopyable {
-public:
-    typedef ScopedLockImpl<Spinlock> Lock;
-
-    Spinlock() {
-        pthread_spin_init(&m_mutex, 0);
-    }
-
-    ~Spinlock() {
-        pthread_spin_destroy(&m_mutex);
-    }
-
-    void lock() {
-        pthread_spin_lock(&m_mutex);
-    }
-
-    void unlock() {
-        pthread_spin_unlock(&m_mutex);
-    }
-
-private:
-    pthread_spinlock_t m_mutex{};
-};
-
-/*
- *@作用：原子锁
- *@参数：null
- *@返回值：null
- */
-class CASLock : boost::noncopyable {
-public:
-    /// 局部锁
-    typedef ScopedLockImpl<CASLock> Lock;
-
-    CASLock() {
-        m_mutex.clear();
-    }
-
-    ~CASLock() = default;
-
-    void lock() {
-        while (std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire));
-    }
-
-    void unlock() {
-        std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release);
-    }
-
-private:
-    volatile std::atomic_flag m_mutex;
-};
 }
-
-

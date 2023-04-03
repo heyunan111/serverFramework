@@ -17,12 +17,12 @@
 #include <iostream>
 
 void test_sch() {
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test.log");
+
 
     hyn::scheduler::Scheduler sc;
     sc.stop();
 
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
+
 }
 
 #endif //SERVERFRAMEWORK_TEST_SCHEDULER_H
