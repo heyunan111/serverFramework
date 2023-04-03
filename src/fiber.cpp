@@ -58,7 +58,18 @@ hyn::fiber::Fiber::Fiber() {
 
     debug("Fiber::Fiber");
 }
-
+/*
+    typedef struct ucontext_t
+    {
+    unsigned long int __ctx(uc_flags);
+    struct ucontext_t *uc_link;
+    stack_t uc_stack;
+    mcontext_t uc_mcontext;
+    sigset_t uc_sigmask;
+    struct _libc_fpstate __fpregs_mem;
+    __extension__ unsigned long long int __ssp[4];
+    } ucontext_t;
+*/
 hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize) : m_id(++s_fiber_id), m_cb(std::move(cb)),
                                                                        m_ctx(), m_state(INIT), m_stack(nullptr) {
     m_stacksize = stacksize ? stacksize : 131072;
@@ -215,6 +226,10 @@ void hyn::fiber::Fiber::swap_out(const hyn::fiber::Fiber::ptr &fiber1) {
         info("swap_out (fiber) error");
         THROW_RUNTIME_ERROR_IF(1, "swap_out (fiber) error");
     }
+}
+
+void hyn::fiber::Fiber::set_m_state(State mState) {
+    m_state = mState;
 }
 
 

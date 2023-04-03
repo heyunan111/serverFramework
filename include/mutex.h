@@ -277,7 +277,7 @@ public:
     }
 
 private:
-    pthread_spinlock_t m_mutex;
+    pthread_spinlock_t m_mutex{};
 };
 
 /*
@@ -294,8 +294,7 @@ public:
         m_mutex.clear();
     }
 
-    ~CASLock() {
-    }
+    ~CASLock() = default;
 
     void lock() {
         while (std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire));

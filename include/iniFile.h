@@ -49,7 +49,7 @@ class IniFile {
 public:
     IniFile() = default;
 
-    IniFile(const std::string &filename);
+    explicit IniFile(const std::string &filename);
 
     ~IniFile() = default;
 

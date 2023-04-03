@@ -59,7 +59,7 @@ public:
      *@返回值：null
      */
     template<typename fiber_or_callback>
-    void Schedule(fiber_or_callback fc, int thread = -1) {
+    void schedule(fiber_or_callback fc, int thread = -1) {
         bool need_tickle = false;
         {
             mutexType::Lock lock(m_mutex);
@@ -181,8 +181,8 @@ private:
 protected:
     std::vector<int> m_thread_ids;      //协程id数组
     size_t m_thread_count{0};           //线程数
-    size_t m_active_thread_count{0};    //工作线程数
-    size_t m_idle_thread_count{0};      //空闲线程数
+    std::atomic<size_t> m_active_thread_count{0};    //工作线程数
+    std::atomic<size_t> m_idle_thread_count{0};      //空闲线程数
     bool m_stopping{true};              //是否正在停止
     bool m_auto_stop{false};            //是否自动停止
     int m_root_thread_id{0};            //主线程id

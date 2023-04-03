@@ -11,7 +11,6 @@
 
 
 #include <cassert>
-#include <utility>
 #include "../include/Scheduler.h"
 #include "../include/util.h"
 #include "../include/Logger.h"
@@ -100,40 +99,109 @@ void Scheduler::tickle() {
 
 }
 
+/*
+ * 设置当前线程的scheduler
+ * 设置当前线程的run,fiber
+ * 协程调度循环while(true)
+ *      协程消息队列是否有任务
+ *      无任务，执行idle
+ * */
 void Scheduler::run() {
-    SetThis();
+    SetThis();  //把当前线程的schedule置为他自己
     if (util::GetThreadId() != m_root_thread_id) {
+        //如果线程id != 主线程id，协程就等于主线程的协程
         t_fiber = fiber::Fiber::GetThis().get();
     }
-    fiber::Fiber::ptr idle_fiber(new fiber::Fiber([this] { idle(); }));
+    fiber::Fiber::ptr idle_fiber(new fiber::Fiber([this] { idle(); })); //当调度任务都完成之后去做
     fiber::Fiber::ptr cb_fiber;
     Task task;
     while (true) {
         task.reset();
         bool tickle_me = false;
-        {
+        { //从消息队列取出一个应该要执行任务
             mutexType::Lock lock(m_mutex);
             auto it = m_fibers.begin();
             while (it != m_fibers.end()) {
                 if (it->thread != -1 && it->thread != util::GetThreadId()) {
+                    //当前执行run的线程id不等于期望的线程id，不能处理，通知别人处理
                     ++it;
                     tickle_me = true;
                     continue;
                 }
                 assert(it->fiber || it->cb);
                 if (it->fiber && it->fiber->get_state() == fiber::Fiber::EXEC) {
+                    //如果是fiber ,并且正在执行，不处理
                     ++it;
                     continue;
                 }
+                //把任务拿出来
                 task = *it;
                 m_fibers.erase(it++);
+            }
+        }
+
+        if (tickle_me) {
+            tickle();
+        }
+
+        if (task.fiber && task.fiber->get_state() != fiber::Fiber::TERM ||
+            task.fiber->get_state() != fiber::Fiber::EXCEPT) {
+            //如果是协程
+            ++m_active_thread_count;
+            task.fiber->swap_in();
+            --m_active_thread_count;
+
+            if (task.fiber->get_state() == fiber::Fiber::READY) {
+                //fiber可执行，放入消息队列去执行
+                schedule(task.fiber);
+            } else if (task.fiber->get_state() != fiber::Fiber::TERM &&
+                       task.fiber->get_state() != fiber::Fiber::EXCEPT) {
+                task.fiber->set_m_state(fiber::Fiber::HOLD);
+            }
+
+            task.reset();
+        } else if (task.cb) {
+            if (cb_fiber) {
+                cb_fiber->reset(task.cb);
+            } else {
+                cb_fiber.reset(new fiber::Fiber(task.cb));
+            }
+
+            task.reset();
+            ++m_active_thread_count;
+            cb_fiber->swap_in();
+            --m_active_thread_count;
+
+            if (cb_fiber->get_state() == fiber::Fiber::READY) {
+                schedule(cb_fiber);
+            } else if (cb_fiber->get_state() == fiber::Fiber::EXCEPT ||
+                       cb_fiber->get_state() == fiber::Fiber::TERM) {
+                cb_fiber->reset(nullptr);
+            } else {
+                cb_fiber->set_m_state(fiber::Fiber::HOLD);
+                cb_fiber.reset();
+            }
+
+        } else {
+
+            if (idle_fiber->get_state() == fiber::Fiber::TERM) {
+                break;
+            }
+
+            ++m_idle_thread_count;
+            idle_fiber->swap_in();
+            --m_idle_thread_count;
+
+            if (idle_fiber->get_state() != fiber::Fiber::TERM ||
+                idle_fiber->get_state() != fiber::Fiber::EXCEPT) {
+                idle_fiber->set_m_state(fiber::Fiber::HOLD);
             }
         }
     }
 }
 
 bool Scheduler::stopping() {
-
+    return false;
 }
 
 void Scheduler::SetThis() {

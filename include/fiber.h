@@ -185,6 +185,10 @@ private:
     uint32_t m_stacksize = 0;
     /// 协程状态
     State m_state = INIT;
+public:
+    void set_m_state(State mState);
+
+private:
     // 协程上下文
     ucontext_t m_ctx{};
     // 协程运行栈指针
