@@ -1,4 +1,4 @@
-### Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name)
+> ### Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name)
 
 <p>调度器的构造函数，根据传入的参数来初始化调度器的一些成员变量。 参数thread代表要创建的线程数，如果use_caller为true，就会将当前线程也作为一
 个协程进行调度。name表示调度器的名字。 首先，断言线程数必须大于0，如果不满足这个条件会触发一个断言失败的错误。<p>
@@ -8,12 +8,12 @@ t_scheduler指针指向当前的调度器对象，方
 后续使用。最后，保存当前线程的线程ID到m_thread_ids中。 如果use_caller为false，说明不需要将当前线程作为协程进行调度，只需要保存调度器的名
 字和线程数即可。m_root_thread_id被赋值为-1。 总的来说，这段代码的作用是初始化调度器的一些成员变量，根据需要创建根协程，保存线程ID等信息。<p>
 
-### void Scheduler::start()
+> ### void Scheduler::start()
 
 启动调度器，它首先获取调度器的锁，检查调度器是否已经在运行，如果是，则直接返回；否则，将停止标志 m_stopping 置为 false，同时创建
 m_thread_count 个线程，每个线程都运行 Scheduler::run() 函数，线程的名称为 m_name 加上线程编号。在启动线程之后，它释放锁并返回。
 
-### void Scheduler::run()
+> ### void Scheduler::run()
 
 <p>其主要作用是管理协程的执行。我们可以分成几个部分来详细分析：<p>
 <p>1.线程状态的管理<p>
@@ -37,7 +37,7 @@ EXCEPTION，并将
 HOLD，并等待
 下一次调度。<p>
 
-### void Scheduler::stop()
+> ### void Scheduler::stop()
 
 <p>这段代码实现了调度器的停止功能，首先设置了m_auto_stop为true。如果当前调度器没有正在运行的协程，也就是m_thread_count为0且
 m_root_fiber的状态为TERM或INIT，则设置m_stopping为true。接着，如果当前调度器正在停止中，直接返回。然后判断当前调度器是否运行在主线程中
