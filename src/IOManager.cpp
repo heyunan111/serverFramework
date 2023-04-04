@@ -122,7 +122,11 @@ bool IOManager::delEvent(int fd, IOManager::Event event) {
     if (!(fdContext->m_event & event))
         return false;
 
-    //设置或修改epoll
+    //构造一个新的事件列表 new_events，删除要删除的事件 event。
+    //如果新的事件列表 new_events 不为空，就调用 epoll_ctl 修改事件列表为新的列表；否则，就调用 epoll_ctl 删除事件。
+    auto new_event = (Event) (fdContext->m_event & ~event);
+    int op = new_event ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
+    
 
 }
 

@@ -96,7 +96,7 @@ public:
      */
     explicit IOManager(size_t thread = 1, bool use_call = true, const std::string &name = "");
 
-    ~IOManager();
+    ~IOManager() override;
 
     /**
      *@作用：添加事件
