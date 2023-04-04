@@ -202,6 +202,7 @@ private:
  *@返回值：null
  */
 class RWMutex : boost::noncopyable {
+public:
 
     typedef ReadScopedLockImpl<RWMutex> ReadLock;
 
