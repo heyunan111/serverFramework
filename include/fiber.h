@@ -25,7 +25,8 @@ uc_sigmask主要保存阻塞信号量集
 uc_stack主要是保存堆栈信息
 
 getcontext : 将当前进程的上下文保存到ucp指向的数据结构里，为了后续的setcontext 调用
-makecontext : 用以自己构造上下文，主要是需要引入自己的函数时调用（作用可能和pthread_create比较类似）。手册上说ucp所指向的结构之前必须需要被getcontext初始化，并且需要已经分配的栈空间。
+makecontext : 用以自己构造上下文，主要是需要引入自己的函数时调用（作用可能和pthread_create比较类似）。手册上说ucp所指向的结构之前必须
+ 需要被getcontext初始化，并且需要已经分配的栈空间。
 setcontext : 用来保存当前进程的context。
 
 如果ucp是由getcontext得到的话，那么setcontext的执行序列就如同调用getcontext之前一样。
@@ -45,18 +46,36 @@ public:
     typedef std::shared_ptr<Fiber> ptr;
     //协程状态
     enum State {
-        INIT,       // 初始化状态
-        HOLD,       // 暂停状态
-        EXEC,       // 执行中状态
-        TERM,       // 结束状态
-        READY,      // 可执行状态
-        EXCEPT      // 异常状态
+        /// 初始化状态
+        INIT,
+        /// 暂停状态
+        HOLD,
+        /// 执行中状态
+        EXEC,
+        /// 结束状态
+        TERM,
+        /// 可执行状态
+        READY,
+        /// 异常状态
+        EXCEPT
     };
 private:
+    /**
+     *@作用：每个线程第一个协程的构造函数
+     *@参数：null
+     *@返回值：null
+     */
     Fiber();
 
 public:
 
+    /**
+     *@作用：构造函数
+     *@参数：协程执行的函数
+     *@参数：协程栈的大小
+     *@参数：是否在MainFiber上调度
+     *@返回值：null
+     */
     explicit Fiber(std::function<void()> cb, size_t stacksize = 0, bool use_caller = false);
 
     ~Fiber();

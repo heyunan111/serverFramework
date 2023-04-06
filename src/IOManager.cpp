@@ -126,6 +126,8 @@ bool IOManager::delEvent(int fd, IOManager::Event event) {
     //如果新的事件列表 new_events 不为空，就调用 epoll_ctl 修改事件列表为新的列表；否则，就调用 epoll_ctl 删除事件。
     auto new_event = (Event) (fdContext->m_event & ~event);
     int op = new_event ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
+    epoll_event ep_event{};
+    ep_event.events = EPOLLET | new_event;
     
 
 }

@@ -17,10 +17,16 @@
 #include "../include/Scheduler.h"
 #include "../include/util.h"
 
+/**
+ * 有且只有 thread_local 关键字修饰的变量具有线程（thread）周期，这些变量在线程开始的时候被生成，在线程结束的时候被销毁，
+ * 并且每一个线程都拥有一个独立的变量实例。
+ */
 
 static std::atomic<uint64_t> s_fiber_id{0};
 static std::atomic<uint64_t> s_fiber_count{0};
+///t_fiber是每个线程中当前协程的指针
 static thread_local hyn::fiber::Fiber *t_fiber = nullptr;
+///t_threadFiber是线程自身的协程
 static thread_local hyn::fiber::Fiber::ptr t_threadFiber = nullptr;
 
 
@@ -30,7 +36,7 @@ static thread_local hyn::fiber::Fiber::ptr t_threadFiber = nullptr;
 */
 class MallocStackAllocator {
 public:
-    /*
+    /**
      *@作用：分配内存
      *@参数：分配大小
      *@返回值：void*
@@ -39,7 +45,7 @@ public:
         return malloc(size);
     }
 
-    /*
+    /**
      *@作用：释放内存
      *@参数：要释放的内存，大小
      *@返回值：null
@@ -62,7 +68,8 @@ hyn::fiber::Fiber::Fiber() {
 
     debug("Fiber::Fiber main");
 }
-/*
+
+/**
     typedef struct ucontext_t
     {
     unsigned long int __ctx(uc_flags);
@@ -75,8 +82,8 @@ hyn::fiber::Fiber::Fiber() {
     } ucontext_t;
 */
 hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller) : m_id(++s_fiber_id),
-                                                                                        m_cb(std::move(cb)),
-                                                                                        m_ctx(), m_state(INIT),
+                                                                                        m_cb(std::move(cb)), m_ctx(),
+                                                                                        m_state(INIT),
                                                                                         m_stack(nullptr) {
     ++s_fiber_count;
     m_stacksize = stacksize ? stacksize : 131072;

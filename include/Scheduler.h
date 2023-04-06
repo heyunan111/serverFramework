@@ -39,6 +39,13 @@ public:
     typedef std::shared_ptr<Scheduler> ptr;
     typedef hyn::mutex::Mutex mutexType;
 
+    /**
+     *@作用：构造函数
+     *@参数：创建的线程数
+     *@参数：是否使用当前线程作为调度器的主线程
+     *@参数：调度器的名称
+     *@返回值：null
+     */
     explicit Scheduler(size_t thread = 1, bool use_caller = true, const std::string &name = "");
 
     virtual ~Scheduler();
@@ -46,7 +53,7 @@ public:
     [[nodiscard]] const std::string &get_name() const { return m_name; }
 
     /**
-     *@作用：启动写成调度器
+     *@作用：启动调度器
      *@参数：null
      *@返回值：null
      */
@@ -143,7 +150,7 @@ private:
      *@作用：添加任务（无锁）
      *@参数：fc：可执行实例
      *@参数：thread：要绑定id
-     *@返回值：null
+     *@返回值：是否需要唤醒调度器
      */
     template<typename fiber_or_callback>
     bool scheduleNoLock(fiber_or_callback fc, int thread) {

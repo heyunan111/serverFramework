@@ -16,7 +16,10 @@
 #include "../include/Logger.h"
 
 namespace hyn::scheduler {
+
+///记录当前线程所属的调度器对象指针，用于协程的调度和切换
 static thread_local Scheduler *t_scheduler = nullptr;
+///记录当前线程正在执行的协程对象指针，用于协程的切换和状态保存
 static thread_local fiber::Fiber *t_fiber = nullptr;
 
 Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name) : m_name(name) {
@@ -58,13 +61,6 @@ void Scheduler::start() {
         m_thread_ids.push_back(m_threads[i]->get_id());
     }
     lock.unlock();
-
-//    if (m_root_fiber) {
-//        debug("start call");
-//        m_root_fiber->call();
-//
-//    }
-
 }
 
 void Scheduler::stop() {

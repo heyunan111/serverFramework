@@ -1,11 +1,14 @@
 #include <iostream>
-#include <sys/socket.h>
-#include "test/test_scheduler.h"
-#include "test/test_fiber.h"
-
+#include <format>
 int main() {
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test.log");
-    //test_fiber();
-    test_sch();
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
+    std::string name = "Tom";
+    int age = 20;
+    double height = 1.75;
+
+    // 使用 format 函数进行格式化输出
+    std::string str = std::format("My name is {}, I'm {} years old, and my height is {:.2f} meters.", name, age,
+                                  height);
+    std::cout << str << std::endl;
+
+    return 0;
 }
