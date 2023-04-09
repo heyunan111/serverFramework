@@ -228,8 +228,17 @@ void IOManager::tickle() {
     assert(rt == 1);
 }
 
+bool IOManager::stopping(uint64_t &timeout) {
+    timeout = getNextTimer();
+    return timeout == ~0ull
+           && m_pendingEventCount == 0
+           && Scheduler::stopping();
+
+}
+
 bool IOManager::stopping() {
-    return Scheduler::stopping() && m_pendingEventCount == 0;
+    uint64_t timeout = 0;
+    return stopping(timeout);
 }
 
 void IOManager::idle() {
@@ -318,6 +327,10 @@ void IOManager::contextResize(size_t size) {
             m_fdContexts_vertor[i]->m_fd = i;
         }
     }
+}
+
+void IOManager::onTimerInsertedAtFront() {
+    tickle();
 }
 
 IOManager::FdContext::EventContext &IOManager::FdContext::get_context(IOManager::Event event) {

@@ -10,7 +10,7 @@
 #pragma once
 
 #include "Scheduler.h"
-
+#include "Timer.h"
 namespace hyn::iomanager {
 
 /**
@@ -20,7 +20,7 @@ namespace hyn::iomanager {
  *@包括：取消所有事件；
  *@包括：多线程并发执行；
  */
-class IOManager : public scheduler::Scheduler {
+class IOManager : public scheduler::Scheduler, public TimerManager {
 public:
     typedef std::shared_ptr<IOManager> ptr;
     typedef mutex::RWMutex RWMutexType;
@@ -137,12 +137,16 @@ public:
      */
     static IOManager *GetThis();
 
+    bool stopping(uint64_t &timeout);
+
 protected:
     void tickle() override;
 
     bool stopping() override;
 
     void idle() override;
+
+    void onTimerInsertedAtFront() override;
 
     /**
      *@作用：重置socket上下文句柄大小

@@ -78,9 +78,9 @@ bool Timer::Comparator::operator()(const Timer::ptr &lhs, const Timer::ptr &rhs)
         return true;
     if (!rhs)
         return false;
-    if (lhs->m_ms < rhs->m_ms)
+    if (lhs->m_next < rhs->m_next)
         return true;
-    if (lhs->m_ms > rhs->m_ms)
+    if (lhs->m_next > rhs->m_next)
         return false;
     return lhs.get() < rhs.get();
 }
@@ -129,7 +129,35 @@ void TimerManager::addTimer(const Timer::ptr &val, mutex::RWMutex::WriteLock &lo
 }
 
 void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
-
+    uint64_t now_time = util::GetCurrentMS();
+    std::vector<Timer::ptr> expired;
+    {
+        RWMutexType::ReadLock lock(m_mutex);
+        if (m_timers.empty())
+            return;
+    }
+    RWMutexType::WriteLock lock1(m_mutex);
+    if (m_timers.empty())
+        return;
+    bool rollover = detectClockRollover(now_time);
+    if (!rollover && (*m_timers.begin())->m_next > now_time)
+        return;
+    Timer::ptr nowTimer(new Timer(now_time));
+    auto it = rollover ? m_timers.end() : m_timers.lower_bound(nowTimer);
+    while (it != m_timers.end() && (*it)->m_next == now_time)
+        it++;
+    expired.insert(expired.begin(), m_timers.begin(), it);
+    m_timers.erase(m_timers.begin(), it);
+    cbs.reserve(expired.size());
+    for (auto &time: expired) {
+        cbs.push_back(time->m_cb);
+        if (time->m_recurring) {
+            time->m_next = now_time + time->m_ms;
+            m_timers.insert(time);
+        } else {
+            time->m_cb = nullptr;
+        }
+    }
 }
 
 bool TimerManager::hasTimer() {

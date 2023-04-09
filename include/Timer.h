@@ -62,7 +62,7 @@ private:
     bool m_recurring{false};
     ///执行周期
     uint64_t m_ms{0};
-    ///执行完成之后时间
+    ///精确执行时间
     uint64_t m_next{0};
     ///回调函数
     std::function<void()> m_cb;
