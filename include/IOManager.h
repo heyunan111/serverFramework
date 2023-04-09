@@ -32,9 +32,9 @@ public:
         ///无事件
         NONE = 0x0,
         ///读事件
-        READ = 0x1,
+        READ = 0x00000001,      //EPOLLIN
         ///写事件
-        WRITE = 0x4
+        WRITE = 0x00000004      //EPOLLOUT
     };
 
 private:
@@ -65,7 +65,7 @@ private:
          *@参数：待重置的上下文类
          *@返回值：null
          */
-        static void ResetContext(EventContext &ctx);
+        void ResetContext(EventContext &ctx);
 
         /**
          *@作用：触发事件
@@ -116,7 +116,7 @@ public:
     bool delEvent(int fd, Event event);
 
     /**
-     *@作用：取消事件
+     *@作用：取消事件,强制执行
      *@参数：socket句柄
      *@参数：事件类型
      *@返回值：是否成功
@@ -155,13 +155,13 @@ private:
     ///epoll句柄
     int m_epfd{0};
     ///pipe句柄
-    int m_tickleFds[2];
+    int m_tickleFds[2]{};
     ///当前等待执行的事件数量
     std::atomic<size_t> m_pendingEventCount{0};
     ///IOManger的mutex
     RWMutexType m_rw_mutex;
     ///socket事件上下文的容器
-    std::vector<FdContext *> m_fdContexts;
+    std::vector<FdContext *> m_fdContexts_vertor;
 };
 
 } /// iomanager

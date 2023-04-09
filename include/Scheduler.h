@@ -29,8 +29,8 @@ N-M协程调度器的优点是可以充分利用多核处理器的性能，实�
 /**
  *@类名：Scheduler
  *@参数：mutexType m_mutex;
- *@参数：std::vector<thread::Thread::ptr> m_threads;     线程对象列表
- *@参数：std::list<Task> m_fibers;                       任务集合
+ *@参数：std::vector<thread::Thread::ptr> m_thread_pool;     线程对象列表
+ *@参数：std::list<Task> m_task_queue;                       任务集合
  *@参数：std::string m_name;
  */
 
@@ -96,7 +96,8 @@ public:
         {
             mutexType::Lock lock(m_mutex);
             while (begin != end) {
-                need_tickle = scheduleNoLock(&(*begin) || need_tickle);
+                ///全部添加完成之后是否需要tickle
+                need_tickle = scheduleNoLock(&(*begin), -1) || need_tickle;
             }
         }
         if (need_tickle)
@@ -124,7 +125,7 @@ protected:
     void run();
 
     /**
-     *@作用：判断是否可以停止
+     *@作用：判断是否已经停止
      *@参数：null
      *@返回值：bool
      */
@@ -145,6 +146,10 @@ protected:
      */
     virtual void idle();
 
+    bool has_idle_thread() {
+        return m_idle_thread_count > 0;
+    }
+
 private:
     /**
      *@作用：添加任务（无锁）
@@ -154,10 +159,10 @@ private:
      */
     template<typename fiber_or_callback>
     bool scheduleNoLock(fiber_or_callback fc, int thread) {
-        bool need_tickle = m_fibers.empty();
+        bool need_tickle = m_task_queue.empty();
         Task task(fc, thread);
         if (task.fiber || task.cb)
-            m_fibers.push_back(task);
+            m_task_queue.push_back(task);
         return need_tickle;
     }
 
@@ -194,14 +199,14 @@ private:
 
 protected:
     ///协程id数组
-    std::vector<int> m_thread_ids;
+    std::vector<int> m_thread_id_vector;
     ///线程数
     size_t m_thread_count{0};
     ///工作线程数
     std::atomic<size_t> m_active_thread_count{0};
     ///空闲线程数
     std::atomic<size_t> m_idle_thread_count{0};
-    ///是否正在停止
+    ///是否处于停止状态
     bool m_stopping{true};
     ///是否自动停止
     bool m_auto_stop{false};
@@ -210,11 +215,15 @@ protected:
 private:
     mutexType m_mutex;
     ///线程池
-    std::vector<thread::Thread::ptr> m_threads;
+    std::vector<thread::Thread::ptr> m_thread_pool;
     ///待执行的协程队列
-    std::list<Task> m_fibers;
+    std::list<Task> m_task_queue;
     ///协程调度器名称
     std::string m_name;
+public:
+    [[nodiscard]] const std::string &getMName() const;
+
+private:
     ///use_caller为true有效，调度协程
     fiber::Fiber::ptr m_root_fiber;
 };

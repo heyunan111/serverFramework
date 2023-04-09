@@ -25,7 +25,7 @@ static thread_local fiber::Fiber *t_fiber = nullptr;
 Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name) : m_name(name) {
     assert(thread > 0);
     if (use_caller) {
-        fiber::Fiber::GetThis();
+        fiber::Fiber::GetThis();//确保当前线程中有协程
         --thread;
         assert(GetThis() == nullptr);
         t_scheduler = this;
@@ -33,7 +33,7 @@ Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name) : 
         thread::Thread::SetName(name);
         t_fiber = m_root_fiber.get();
         m_root_thread_id = util::GetThreadId();
-        m_thread_ids.emplace_back(m_root_thread_id);
+        m_thread_id_vector.emplace_back(m_root_thread_id);
     } else {
         m_root_thread_id = -1;
     }
@@ -54,11 +54,11 @@ void Scheduler::start() {
         return;
     }
     m_stopping = false;
-    assert(m_threads.empty());
-    m_threads.resize(m_thread_count);
+    assert(m_thread_pool.empty());
+    m_thread_pool.resize(m_thread_count);
     for (int i = 0; i < m_thread_count; ++i) {
-        m_threads[i].reset(new thread::Thread([this] { run(); }, m_name + '_' + std::to_string(i)));
-        m_thread_ids.push_back(m_threads[i]->get_id());
+        m_thread_pool[i].reset(new thread::Thread([this] { run(); }, m_name + '_' + std::to_string(i)));
+        m_thread_id_vector.push_back(m_thread_pool[i]->get_id());
     }
     lock.unlock();
 }
@@ -101,7 +101,7 @@ void Scheduler::stop() {
 
     {
         mutexType::Lock lock(m_mutex);
-        thrs.swap(m_threads);
+        thrs.swap(m_thread_pool);
     }
 
     for (auto &i: thrs) {
@@ -122,7 +122,7 @@ void Scheduler::tickle() {
     debug("tickle");
 }
 
-/*
+/**
  * 设置当前线程的scheduler
  * 设置当前线程的run,fiber
  * 协程调度循环while(true)
@@ -145,28 +145,31 @@ void Scheduler::run() {
         bool is_active = false;
         {
             mutexType::Lock lock(m_mutex);
-            auto it = m_fibers.begin();
-            while (it != m_fibers.end()) {
+            auto it = m_task_queue.begin();
+            while (it != m_task_queue.end()) {
                 if (it->thread != -1 && it->thread != util::GetThreadId()) {
                     //当前执行run的线程id不等于期望的线程id，不能处理，通知别人处理
                     ++it;
                     tickle_me = true;
                     continue;
                 }
+
                 assert(it->fiber || it->cb);
+
                 if (it->fiber && it->fiber->get_state() == fiber::Fiber::EXEC) {
                     //如果是fiber ,并且正在执行，不处理
                     ++it;
                     continue;
                 }
+
                 //把任务拿出来
                 task = *it;
-                m_fibers.erase(it++);
+                m_task_queue.erase(it++);
                 ++m_active_thread_count;
                 is_active = true;
                 break;
             }
-            tickle_me |= it != m_fibers.end();
+            tickle_me |= it != m_task_queue.end();
 
         }
 
@@ -190,6 +193,7 @@ void Scheduler::run() {
 
             task.reset();
         } else if (task.cb) {
+
             if (cb_fiber) {
                 cb_fiber->reset(task.cb);
             } else {
@@ -237,7 +241,7 @@ void Scheduler::run() {
 
 bool Scheduler::stopping() {
     mutexType::Lock lock(m_mutex);
-    return m_auto_stop && m_stopping && m_fibers.empty() && m_active_thread_count == 0;
+    return m_auto_stop && m_stopping && m_task_queue.empty() && m_active_thread_count == 0;
 }
 
 void Scheduler::SetThis() {
@@ -249,6 +253,10 @@ void Scheduler::idle() {
     while (!stopping()) {
         fiber::Fiber::YieldToHold();
     }
+}
+
+const std::string &Scheduler::getMName() const {
+    return m_name;
 }
 
 

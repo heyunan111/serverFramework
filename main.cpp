@@ -1,14 +1,9 @@
-#include <iostream>
-#include <format>
+
+#include "hyn_include.h"
+#include "test/test_iomanager.h"
+
 int main() {
-    std::string name = "Tom";
-    int age = 20;
-    double height = 1.75;
-
-    // 使用 format 函数进行格式化输出
-    std::string str = std::format("My name is {}, I'm {} years old, and my height is {:.2f} meters.", name, age,
-                                  height);
-    std::cout << str << std::endl;
-
-    return 0;
+    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test.log");
+    test();
+    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
 }
