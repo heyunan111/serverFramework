@@ -61,7 +61,7 @@ IOManager::~IOManager() {
 //首先通过文件描述符fd找到对应的FdContext，如果找到则加锁并将fd对应的事件添加到epoll事件循环中，如果未找到则先扩展
 //FdContext数组，再加锁后添加事件到epoll事件循环中。如果添加事件成功，将事件与回调函数绑定，以便在事件发生时回调。
 int IOManager::addEvent(int fd, IOManager::Event event, std::function<void()> cb) {
-    FdContext *fdContext;
+    FdContext *fdContext = nullptr;
     RWMutexType::ReadLock lock(m_rw_mutex);
 
     //通过文件描述符fd找到对应的FdContext，如果未找到则先扩展FdContext数组
@@ -101,7 +101,6 @@ int IOManager::addEvent(int fd, IOManager::Event event, std::function<void()> cb
     FdContext::EventContext &event_ctx = fdContext->get_context(event);
     assert(event_ctx.scheduler == nullptr && !event_ctx.fiber && !event_ctx.cb);
     event_ctx.scheduler = scheduler::Scheduler::GetThis();
-
     if (cb) {
         event_ctx.cb.swap(cb);
     } else {

@@ -48,5 +48,17 @@ uint64_t hyn::util::get_fiber_id() {
     return hyn::fiber::Fiber::GetFiberId();
 }
 
+uint64_t hyn::util::GetCurrentMS() {
+    timeval tv{};
+    gettimeofday(&tv, nullptr);
+    return tv.tv_sec * 1000ul + tv.tv_usec / 1000;
+}
+
+uint64_t hyn::util::GetCurrentUS() {
+    timeval tv{};
+    gettimeofday(&tv, nullptr);
+    return tv.tv_sec * 1000 * 1000ul + tv.tv_usec;
+}
+
 
 

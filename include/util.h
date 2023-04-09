@@ -12,13 +12,18 @@
 
 #include <vector>
 #include <string>
+#include <sys/time.h>
 
 namespace hyn::util {
-    pid_t GetThreadId();
+pid_t GetThreadId();
 
-    uint64_t get_fiber_id();
+uint64_t get_fiber_id();
 
-    void backtrace(std::vector<std::string> &bt, int size, int skip = 1);
+void backtrace(std::vector<std::string> &bt, int size, int skip = 1);
 
-    std::string backtrace_to_string(int size = 64, int skip = 2, const std::string &prefix = "");
+std::string backtrace_to_string(int size = 64, int skip = 2, const std::string &prefix = "");
+
+uint64_t GetCurrentMS();
+
+uint64_t GetCurrentUS();
 }

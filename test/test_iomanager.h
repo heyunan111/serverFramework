@@ -24,25 +24,31 @@
 
 void test_fiber() {
     info("test_fiber");
-};
-
-void test45() {
-    std::cout << "hell\n";
-}
-
-void test1() {
-    hyn::iomanager::IOManager iom;
-    iom.schedule(&test_fiber);
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     fcntl(sock, F_SETFL, O_NONBLOCK);
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(8080);
     inet_pton(AF_INET, "115.239.210.27", &addr.sin_addr.s_addr);
-    iom.addEvent(sock, hyn::iomanager::IOManager::READ, [] {
-        info("connect");
-    });
-    connect(sock, (sockaddr *) &addr, sizeof(addr));
+    if (!connect(sock, (sockaddr *) &addr, sizeof(addr))) {
+        info("error");
+    } else if (errno == EINPROGRESS) {
+        hyn::iomanager::IOManager::GetThis()->addEvent(sock, hyn::iomanager::IOManager::READ, [] {
+            info("connected");
+        });
+        hyn::iomanager::IOManager::GetThis()->addEvent(sock, hyn::iomanager::IOManager::WRITE, [] {
+            info("connected");
+        });
+    } else {
+        info("error else");
+    }
+};
+
+void test1() {
+    hyn::iomanager::IOManager iom;
+    iom.schedule(&test_fiber);
+
+
 }
 
 void test() {
