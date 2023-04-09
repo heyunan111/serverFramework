@@ -23,6 +23,7 @@ void backtrace(std::vector<std::string> &bt, int size, int skip = 1);
 
 std::string backtrace_to_string(int size = 64, int skip = 2, const std::string &prefix = "");
 
+///获取当前时间
 uint64_t GetCurrentMS();
 
 uint64_t GetCurrentUS();

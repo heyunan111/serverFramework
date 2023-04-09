@@ -56,13 +56,13 @@ private:
      */
     Timer(uint64_t ms, std::function<void()> cb, bool recurring, TimerManager *manager);
 
-    Timer(uint64_t next);
+    explicit Timer(uint64_t next);
 
     ///是否循环定时器
     bool m_recurring{false};
     ///执行周期
     uint64_t m_ms{0};
-    ///精确的执行时间
+    ///执行完成之后时间
     uint64_t m_next{0};
     ///回调函数
     std::function<void()> m_cb;
@@ -112,6 +112,11 @@ public:
      */
     uint64_t getNextTimer();
 
+    /**
+     *@作用：在定时器超时后执行用户指定的回调函数
+     */
+    static void onTimer(const std::weak_ptr<void> &weak_cond, const std::function<void()> &cb);
+
 protected:
     ///当有新的定时器插入到定时器的首部，执行
     virtual void onTimerInsertedAtFront() = 0;
@@ -121,13 +126,25 @@ protected:
      */
     void addTimer(const Timer::ptr &val, RWMutexType::WriteLock &lock);
 
+
     /**
      *@作用：获取需要执行的定时器的回调函数列表
      *@参数：[out]回调函数数组
      */
     void listExpiredCb(std::vector<std::function<void()>> &cbs);
 
+    /**
+     *@作用：是否有定时器
+     */
+    bool hasTimer();
+
 private:
+    /**
+     *@作用：检测服务器是否被调后了
+     *@参数：当前时间
+     */
+    bool detectClockRollover(uint64_t now_ms);
+
     /// Mutex
     RWMutexType m_mutex;
     /// 定时器集合
