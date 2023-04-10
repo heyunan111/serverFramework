@@ -149,7 +149,7 @@ protected:
     void onTimerInsertedAtFront() override;
 
     /**
-     *@作用：重置socket上下文句柄大小
+     *@作用：重置socket上下文句柄容器大小
      *@参数：大小
      *@返回值：null
      */

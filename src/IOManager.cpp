@@ -32,18 +32,22 @@ namespace hyn::iomanager {
  *pipe[0] 读 pipe[1]写
  */
 IOManager::IOManager(size_t thread, bool use_call, const std::string &name) : Scheduler(thread, use_call, name) {
-    m_epfd = epoll_create(2048);
-    THROW_RUNTIME_ERROR_IF(m_epfd < 0, "epoll_create error");
-    int rt = pipe(m_tickleFds);                 //创建管道
-    THROW_RUNTIME_ERROR_IF(rt != 0, "pipe error");
-    epoll_event ev{};
-    memset(&ev, 0, sizeof(epoll_event));
-    ev.events = EPOLLIN | EPOLLET;
-    ev.data.fd = m_tickleFds[0];
-    rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK); //非阻塞IO
-    assert(!rt);
-    rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &ev);
-    assert(!rt);
+    int epfd = epoll_create(5000);
+    THROW_RUNTIME_ERROR_IF(epfd < 0, "epoll create error");
+
+    int rt = pipe(m_tickleFds);
+    THROW_RUNTIME_ERROR_IF(rt, "pipe error");
+
+    epoll_event ep_event{};
+    ep_event.events = EPOLLIN | EPOLLET;
+    ep_event.data.fd = m_tickleFds[0];
+
+    rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);//设置非阻塞
+    THROW_RUNTIME_ERROR_IF(rt, "fcntl error");
+
+    rt = epoll_ctl(epfd, EPOLL_CTL_ADD, m_tickleFds[0], &ep_event);
+    THROW_RUNTIME_ERROR_IF(rt, "epoll ctl error");
+
     contextResize(32);
     start();
 }
@@ -242,27 +246,39 @@ bool IOManager::stopping() {
 }
 
 void IOManager::idle() {
-    auto *events = new epoll_event[64]();
+    const uint64_t MAX_EVENTS = 256;
+    auto *events = new epoll_event[MAX_EVENTS]();
     std::shared_ptr<epoll_event> shared_events(events, [](epoll_event *ptr) {
         delete[] ptr;
     });
 
-    int rt;
 
     for (;;) {
-
-        if (stopping()) {
+        uint64_t next_timeout = 0;
+        if (stopping(next_timeout)) {
             info("name = %s idle stopping exit", getMName().c_str());
             break;
         }
-
+        int rt;
         do {
-            static const int MAX_TIMEOUT = 5000;
-            rt = epoll_wait(m_epfd, events, 64, MAX_TIMEOUT);
+            static const int MAX_TIMEOUT = 3000;
+            if (next_timeout != ~0ul) {
+                next_timeout = (int) next_timeout > MAX_TIMEOUT ? MAX_TIMEOUT : next_timeout;
+            } else {
+                next_timeout = MAX_TIMEOUT;
+            }
+            rt = epoll_wait(m_epfd, events, MAX_EVENTS, (int) next_timeout);
             if (!(rt < 0 && errno == EINTR)) {
                 break;
             }
         } while (true);
+
+        std::vector<std::function<void()> > cbs;
+        listExpiredCb(cbs);
+        if (!cbs.empty()) {
+            schedule(cbs.begin(), cbs.end());
+            cbs.clear();
+        }
 
         for (int i = 0; i < rt; ++i) {
             epoll_event &event = events[i];
@@ -277,7 +293,7 @@ void IOManager::idle() {
             FdContext::MutexType::Lock lock(fd_ctx->mutex);
 
             if (event.events & (EPOLLERR | EPOLLHUP)) {
-                event.events |= EPOLLIN | EPOLLOUT;
+                event.events |= (EPOLLIN | EPOLLOUT) & fd_ctx->m_event;
             }
 
             int real_events = NONE;
@@ -292,6 +308,7 @@ void IOManager::idle() {
 
             if ((fd_ctx->m_event & real_events) == NONE)
                 continue;
+
             int left_events = (fd_ctx->m_event & ~real_events);//剩余事件
             int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
             event.events = EPOLLET | left_events;
