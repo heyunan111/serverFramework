@@ -95,7 +95,7 @@ int IOManager::addEvent(int fd, IOManager::Event event, std::function<void()> cb
     int rt = epoll_ctl(m_epfd, op, fd, &epollEvent);
 
     if (rt) {
-        error("epoll_ctl :%d,op:%d,fd:%d", m_epfd, op, fd);
+        error(" error epoll_ctl :%d,op:%d,fd:%d", m_epfd, op, fd);
         return -1;
     }
 

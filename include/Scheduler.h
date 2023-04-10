@@ -98,6 +98,7 @@ public:
             while (begin != end) {
                 ///全部添加完成之后是否需要tickle
                 need_tickle = scheduleNoLock(&(*begin), -1) || need_tickle;
+                ++begin;
             }
         }
         if (need_tickle)

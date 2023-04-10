@@ -51,8 +51,24 @@ void test1() {
 
 }
 
+hyn::Timer::ptr s_timer;
+
+void testtimer() {
+    hyn::iomanager::IOManager iom(2);
+
+    s_timer = iom.addTimer(1000, []() {
+        static int i = 0;
+        info("hello timer i = %d", i);
+        if (++i == 3) {
+            s_timer->reset(2000, true);
+            //s_timer->cancel();
+        }
+    }, true);
+}
+
+
 void test() {
-    test1();
+    testtimer();
 }
 
 #endif //SERVERFRAMEWORK_TEST_IOMANAGER_H
