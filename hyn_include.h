@@ -11,6 +11,7 @@
 
 #include "include/exceptdef.h"
 #include "include/fiber.h"
+#include "include/Hook.h"
 #include "include/Logger.h"
 #include "include/iniFile.h"
 #include "include/IOManager.h"
