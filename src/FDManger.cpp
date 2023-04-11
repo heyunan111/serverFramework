@@ -39,9 +39,13 @@ bool FdCtx::init() {
     //如果文件描述符不是套接字，则将m_sysNonblock设置为false。
     if (m_isSocket) {
         int flag = fcntl_f(m_fd, F_GETFL, 0);
-
+        if (!(flag & O_NONBLOCK)) {
+            fcntl_f(m_fd, F_SETFL, flag | O_NONBLOCK);
+            m_isSysNonblock = true;
+        }
+    } else {
+        m_isSysNonblock = false;
     }
-    //将m_userNonblock设置为false，将m_isClosed设置为false。
-    //返回m_isInit的值。
+    return m_isInit;
 }
 } // hyn

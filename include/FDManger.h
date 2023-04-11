@@ -9,9 +9,11 @@
   */
 #pragma once
 
-#include <memory>
+
 #include <boost/container/detail/singleton.hpp>
 #include <sys/stat.h>
+#include <cstdint>
+#include <memory>
 
 namespace hyn {
 
@@ -20,9 +22,9 @@ namespace hyn {
  * @参数 管理文件句柄类型(是否socket)
  * @参数 是否阻塞,是否关闭,读/写超时时间
  */
-class FdCtx /*: public std::enable_shared_from_this<FdCtx>*/ {
+class FdCtx : public std::enable_shared_from_this<FdCtx> {
 public:
-    FdCtx(int fd);
+    explicit FdCtx(int fd);
 
 private:
     bool init();
