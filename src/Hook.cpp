@@ -13,13 +13,33 @@
 
 #include <dlfcn.h>
 
+
 namespace hyn {
 
 static thread_local bool s_hook_enable = false;
 
 #define HOOK_FUN(XX) \
-    XX(sleep) \
-    XX(usleep)
+    XX(sleep)        \
+    XX(usleep)       \
+    XX(nanosleep)    \
+    XX(socket)       \
+    XX(connect)      \
+    XX(accept)       \
+    XX(read)         \
+    XX(readv)        \
+    XX(recv)         \
+    XX(recvfrom)     \
+    XX(recvmsg)      \
+    XX(write)        \
+    XX(writev)       \
+    XX(send)         \
+    XX(sendto)       \
+    XX(sendmsg)      \
+    XX(close)        \
+    XX(fcntl)        \
+    XX(ioctl)        \
+    XX(getsockopt)   \
+    XX(setsockopt)
 
 }
 
@@ -49,13 +69,13 @@ void hook_init() {
 #undef XX
 }
 
-struct _HookIniter {
-    _HookIniter() {
+struct HookIniter {
+    HookIniter() {
         hook_init();
     }
 };
 
-static _HookIniter s_hook_init;
+static HookIniter s_hook_init;
 
 };
 
@@ -80,5 +100,21 @@ int usleep(useconds_t usec) {
     iom->addTimer(usec / 1000, [fiber, iom]() { iom->schedule(fiber); });
     fiber->YieldToHold();
     return 0;
+}
+
+int nanosleep(const struct timespec *req, struct timespec *rem) {
+    if (!hyn::s_hook_enable)
+        return nanosleep_f(req, rem);
+
+    uint64_t times = req->tv_sec * 1000 + req->tv_nsec / 1000 / 1000;
+    hyn::fiber::Fiber::ptr fiber = hyn::fiber::Fiber::GetThis();
+    hyn::iomanager::IOManager *iom = hyn::iomanager::IOManager::GetThis();
+    iom->addTimer(times, [fiber, iom]() { iom->schedule(fiber); });
+    fiber->YieldToHold();
+    return 0;
+}
+
+int socket(int domain, int type, int protocol) {
+
 }
 }//extern "C"

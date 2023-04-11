@@ -14,7 +14,7 @@
 #include "../include/Scheduler.h"
 #include "../include/util.h"
 #include "../include/Logger.h"
-
+#include "../include/Hook.h"
 namespace hyn::scheduler {
 
 ///记录当前线程所属的调度器对象指针，用于协程的调度和切换
@@ -131,6 +131,7 @@ void Scheduler::tickle() {
  * */
 void Scheduler::run() {
     //debug("scheduler run name:%s", m_name.c_str());
+    set_hook_enable(true);
     SetThis();  //把当前线程的schedule置为他自己
     if (util::GetThreadId() != m_root_thread_id) {
         //如果线程id != 主线程id，协程就等于主线程的协程
