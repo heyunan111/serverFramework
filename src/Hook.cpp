@@ -15,10 +15,12 @@
 #include <dlfcn.h>
 #include <string>
 #include <sys/uio.h>
+#include <sys/ioctl.h>
 #include <cstdarg>
 
-namespace hyn {
 
+namespace hyn {
+static uint64_t s_connect_timeout = -1;
 static thread_local bool s_hook_enable = false;
 
 #define HOOK_FUN(XX) \
@@ -221,11 +223,112 @@ int socket(int domain, int type, int protocol) {
     hyn::FdMgr::GetInstance()->get(fd, true);
     return fd;
 }
+
+int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen, uint64_t timout_ms) {
+    //首先判断hook是否启用，如果没有启用，则直接调用connect函数。
+    if (!hyn::s_hook_enable)
+        return connect_f(fd, addr, addrlen);
+
+    //如果hook启用了，那么通过fd获取fd上下文，如果没有或者已经关闭则返回错误。
+    auto ctx = hyn::FdMgr::GetInstance()->get(fd);
+    if (!ctx || ctx->is_close()) {
+        errno = EBADF;
+        return -1;
+    }
+
+    //判断是否为socket以及是否为非阻塞模式，如果不是socket或者用户设置非阻塞，则直接调用connect函数。
+    if (!ctx->is_socket() || ctx->is_usr_nonblock())
+        return connect_f(fd, addr, addrlen);
+
+    // 调用conn如果连接成功，则返回0；       EINPROGRESS是一个系统错误码，表示一个非阻塞的套接字正在进行连接操作，因此连接操作正在进行中（in progress），不是阻塞的。
+    //如果连接出错且错误不是EINPROGRESS，则返回错误代码；
+    int n = connect_f(fd, addr, addrlen);
+    if (n == 0) {
+        return 0;
+    } else if (n != -1 || errno != EINPROGRESS) {
+        return n;
+    }
+    //如果返回-1且错误代码是EINPROGRESS，则进行以下操作：
+    //创建一个定时器。
+    hyn::iomanager::IOManager *iom = hyn::iomanager::IOManager::GetThis();
+    hyn::Timer::ptr timer;
+    auto tinfo = std::make_shared<hyn::time_info>();
+    std::weak_ptr<hyn::time_info> winfo(tinfo);
+
+    //如果timeout_ms不为默认值（-1），则创建一个定时器。定时器回调函数会将超时标记设置为ETIMEDOUT，并取消等待事件的IO事件。
+    if (timout_ms != static_cast<uint64_t>(-1)) {
+        timer = iom->addConditionTimer(timout_ms, [winfo, fd, iom] {
+            auto t = winfo.lock();
+            if (!t || t->cancelled)
+                return;
+            t->cancelled = ETIMEDOUT;
+            iom->cancelEvent(fd, hyn::iomanager::IOManager::WRITE);
+        }, winfo, false);
+    }
+
+    //使用IOManager的addEvent函数向事件循环中添加WRITE事件。如果添加成功，则调用Fiber::YieldToHold函数切换到其他协程执行，
+    // 等待IO事件被触发或者超时定时器超时。
+    int rt = iom->addEvent(fd, hyn::iomanager::IOManager::WRITE);
+    if (rt == 0) {
+        hyn::fiber::Fiber::YieldToHold();
+        if (timer)
+            timer->cancel();
+        if (tinfo) {
+            errno = tinfo->cancelled;
+            return -1;
+        }
+    } else {
+        if (timer)
+            timer->cancel();
+        error("connect addEvent error fd = %d,WRITE", fd);
+    }
+
+    //当WRITE事件被触发或者定时器超时时，使用getsockopt函数获取套接字选项值。如果选项值为0，则表示连接成功，返回0；否则，
+    // 将errno设置为获取的错误码，返回-1。
+    int error{0};
+    socklen_t len = sizeof(int);
+    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) {
+        return -1;
+    }
+    if (!error) {
+        return 0;
+    } else {
+        errno = error;
+        return -1;
+    }
+}
+
+int connect(int fd, const struct sockaddr *addr, socklen_t addrlen) {
+    return connect_with_timeout(fd, addr, addrlen, hyn::s_connect_timeout);
+}
+
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     ssize_t fd = hyn::do_io(sockfd, accept_f, "accept", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, addr, addrlen);
     if (fd >= 0)
         hyn::FdMgr::GetInstance()->get(static_cast<int>(fd), true);
     return static_cast<int>(fd);
+}
+
+int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen) {
+    return getsockopt_f(sockfd, level, optname, optval, optlen);
+}
+
+/*setsockopt，用于设置socket选项的当前值。*/
+/*在 Linux 中，每个套接字（socket）都有一些可选项（options），它们可以设置或获取。这些选项可以控制套接字的行为和属性，例如超时时间、
+ * 缓冲区大小、是否允许地址重用等等。getsockopt 函数可以获取套接字的选项值，这个值可以帮助我们了解套接字的当前状态和属性。*/
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) {
+    if (!hyn::s_hook_enable)
+        return setsockopt_f(sockfd, level, optname, optval, optlen);
+    if (level == SOL_SOCKET) {
+        if (optname == SO_RCVTIMEO || optname == SO_SNDTIMEO) {
+            auto ctx = hyn::FdMgr::GetInstance()->get(sockfd);
+            if (ctx) {
+                auto *v = static_cast<const timeval *>(optval);
+                ctx->set_time(optname, v->tv_sec * 1000 + v->tv_usec / 1000);
+            }
+        }
+    }
+    return setsockopt_f(sockfd, level, optname, optval, optlen);
 }
 
 //read
@@ -365,7 +468,22 @@ int fcntl(int fd, int cmd, ... /* arg */ ) {
 }
 
 int ioctl(int fd, unsigned long request, ...) {
-
+    va_list va;
+    va_start(va, request);
+    void *arg = va_arg(va, void*);
+    va_end(va);
+    //FIONBIO用于控制非阻塞I/O
+    if (request == FIONBIO) {
+        /*将一个整数类型的指针arg解引用，然后通过取反和再取反操作将其转化为bool类型，并将其赋值给了user_nonblock变量。
+        * !!是C/C++中的一种惯用写法，表示将一个值转换为bool类型。第一个感叹号将其转换为bool类型，
+        * 然后再通过第二个感叹号将其再次转换为bool类型并取反，从而保证了最终结果为true或false。*/
+        bool user_nonblock = !!*(int *) arg;
+        auto ctx = hyn::FdMgr::GetInstance()->get(fd);
+        if (!ctx || !ctx->is_socket() || ctx->is_close())
+            return ioctl_f(fd, request, arg);
+        ctx->set_is_usr_nonblock(user_nonblock);
+    }
+    return ioctl(fd, request, arg);
 }
 
 }//extern "C"
