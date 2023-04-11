@@ -17,8 +17,8 @@
 #include <memory>
 #include <fcntl.h>
 #include "mutex.h"
-#include <boost/serialization/singleton.hpp>
-#include <boost/serialization/singleton.hpp>
+#include "_Singleton.h"
+
 
 namespace hyn {
 
@@ -72,8 +72,8 @@ private:
     uint64_t m_sendTimeOut;
 };
 
-class FDManger : public boost::serialization::singleton<FDManger> {
-    friend boost::serialization::singleton<FDManger>;
+class FDManger {
+
 public:
     typedef mutex::RWMutex RWMutexType;
 
@@ -100,5 +100,6 @@ private:
     std::vector<FdCtx::ptr> m_datas;
 };
 
+typedef Singleton <FDManger> FdMgr;
 } // hyn
 
