@@ -10,7 +10,6 @@
 
 
 
-#include <bits/fcntl-linux.h>
 #include "../include/FDManger.h"
 #include "../include/Hook.h"
 
@@ -47,5 +46,68 @@ bool FdCtx::init() {
         m_isSysNonblock = false;
     }
     return m_isInit;
+}
+
+bool FdCtx::is_sys_nonblock() const {
+    return m_isSysNonblock;
+}
+
+void FdCtx::set_is_sys_nonblock(bool mIsSysNonblock) {
+    m_isSysNonblock = mIsSysNonblock;
+}
+
+bool FdCtx::is_usr_nonblock() const {
+    return m_isUsrNonblock;
+}
+
+void FdCtx::set_is_usr_nonblock(bool mIsUsrNonblock) {
+    m_isUsrNonblock = mIsUsrNonblock;
+}
+
+void FdCtx::set_time(int type, uint64_t time) {
+    if (type == SO_RCVTIMEO) {
+        m_recvTimeOut = time;
+    } else {
+        m_sendTimeOut = time;
+    }
+}
+
+uint64_t FdCtx::get_time(int type) const {
+    if (type == SO_RCVTIMEO) {
+        return m_recvTimeOut;
+    } else {
+        return m_sendTimeOut;
+    }
+}
+
+FDManger::FDManger() {
+    m_datas.resize(64);
+}
+
+FdCtx::ptr FDManger::get(int fd, bool auto_create) {
+    if (fd < 0)
+        return nullptr;
+    RWMutexType::ReadLock Rlock(m_mutex);
+    if (fd >= m_datas.size()) {
+        if (!auto_create)
+            return nullptr;
+    } else {
+        return m_datas[fd];
+    }
+    Rlock.unlock();
+
+    RWMutexType::WriteLock Wlock(m_mutex);
+    FdCtx::ptr ctx(new FdCtx(fd));
+    if (fd >= static_cast<double >(m_datas.size()))
+        m_datas.resize(static_cast<unsigned long>((fd * 1.5)));
+    m_datas[fd] = ctx;
+    return ctx;
+}
+
+void FDManger::del(int fd) {
+    RWMutexType::WriteLock lock(m_mutex);
+    if (m_datas.size() <= fd)
+        return;
+    m_datas[fd].reset();
 }
 } // hyn

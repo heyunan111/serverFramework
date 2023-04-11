@@ -13,7 +13,10 @@
 #include <boost/container/detail/singleton.hpp>
 #include <sys/stat.h>
 #include <cstdint>
+#include <vector>
 #include <memory>
+#include <fcntl.h>
+#include "mutex.h"
 
 namespace hyn {
 
@@ -24,7 +27,27 @@ namespace hyn {
  */
 class FdCtx : public std::enable_shared_from_this<FdCtx> {
 public:
+    typedef std::shared_ptr<FdCtx> ptr;
+
     explicit FdCtx(int fd);
+
+    bool is_init() const { return m_isInit; }
+
+    bool is_socket() const { return m_isSocket; }
+
+    bool is_close() const { return m_isClose; }
+
+    bool is_sys_nonblock() const;
+
+    void set_is_sys_nonblock(bool mIsSysNonblock);
+
+    bool is_usr_nonblock() const;
+
+    void set_is_usr_nonblock(bool mIsUsrNonblock);
+
+    void set_time(int type, uint64_t time);
+
+    uint64_t get_time(int type) const;
 
 private:
     bool init();
@@ -48,7 +71,30 @@ private:
 };
 
 class FDManger {
+public:
+    typedef mutex::RWMutex RWMutexType;
 
+    FDManger();
+
+    ~FDManger() = default;
+
+    /**
+     *@作用：获取文件句柄类
+     *@参数：文件句柄
+     *@参数：fd不存在的情况下是否自动创建
+     */
+    FdCtx::ptr get(int fd, bool auto_create = false);
+
+    /**
+     *@作用：删除文件句柄类
+     *@参数：fd
+     */
+    void del(int fd);
+
+private:
+    RWMutexType m_mutex;
+    ///文件句柄集合
+    std::vector<FdCtx::ptr> m_datas;
 };
 
 } // hyn
