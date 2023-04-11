@@ -13,7 +13,9 @@
 #include "../include/FDManger.h"
 #include "../include/Logger.h"
 #include <dlfcn.h>
-
+#include <string>
+#include <sys/uio.h>
+#include <cstdarg>
 
 namespace hyn {
 
@@ -58,7 +60,8 @@ struct time_info {
  */
 template<typename OriginFun, typename ...Args>
 static ssize_t
-do_io(int fd, OriginFun func, char *hook_fun_name, iomanager::IOManager::Event event, int timeout_so, Args ...args) {
+do_io(int fd, OriginFun func, const char *hook_fun_name, iomanager::IOManager::Event event, int timeout_so,
+      Args ...args) {
     //首先判断是否开启了 hook，如果未开启则直接调用原始函数。
     if (!s_hook_enable)
         return func(fd, std::forward<Args>(args)...);
@@ -84,11 +87,13 @@ do_io(int fd, OriginFun func, char *hook_fun_name, iomanager::IOManager::Event e
     retry:
 
     //使用 fun 执行一次 IO 操作，并检查返回值。如果返回值为 -1，且错误码为 EINTR，则说明 IO 操作被中断，需要再次执行 IO 操作。
-    ssize_t n = func(fd, std::forward<Args>(args)...);
+
+    ssize_t n = func(fd, std::forward<Args>(args)...);//如果n == 0，则读到数据了，可以直接返回
+
     while (n == -1 && errno == EINTR) {
         n = func(fd, std::forward<Args>(args)...);
     }
-    //如果函数返回值为 -1 并且全局变量 errno 的值为 EAGAIN，则表示操作被阻塞，需要进行异步操作，否则直接返回函数返回值。
+    //如果函数返回值为 -1 并且全局变量 errno 的值为 EAGAIN，则表示当前操作不能立即完成，需要等待一段时间后再次尝试。
     if (n == -1 && errno == EAGAIN) {
         iomanager::IOManager *iom = iomanager::IOManager::GetThis();
         Timer::ptr timer;
@@ -134,7 +139,7 @@ do_io(int fd, OriginFun func, char *hook_fun_name, iomanager::IOManager::Event e
 
 extern "C" {
 #define XX(name) name##_fun name##_f = nullptr;
-HOOK_FUN(XX) ;
+HOOK_FUN(XX)
 #undef XX
 }
 
@@ -154,7 +159,7 @@ void hook_init() {
         return;
     is_hook_init = true;
 #define XX(name) name ## _f = (name ## _fun) dlsym (RTLD_NEXT, #name);
-    HOOK_FUN(XX);
+    HOOK_FUN(XX)
 #undef XX
 }
 
@@ -166,12 +171,15 @@ struct HookIniter {
 
 static HookIniter s_hook_init;
 
-};
+} //namespace hyn
 
 extern "C" {
+
+//sleep
 unsigned int sleep(unsigned int seconds) {
-    if (!hyn::s_hook_enable)
+    if (!hyn::s_hook_enable) {
         return sleep_f(seconds);
+    }
 
     hyn::fiber::Fiber::ptr fiber = hyn::fiber::Fiber::GetThis();
     hyn::iomanager::IOManager *iom = hyn::iomanager::IOManager::GetThis();
@@ -203,5 +211,161 @@ int nanosleep(const struct timespec *req, struct timespec *rem) {
     return 0;
 }
 
+//socket
+int socket(int domain, int type, int protocol) {
+    if (!hyn::s_hook_enable)
+        return socket_f(domain, type, protocol);
+    int fd = socket_f(domain, type, protocol);
+    if (fd == -1)
+        return -1;
+    hyn::FdMgr::GetInstance()->get(fd, true);
+    return fd;
+}
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+    ssize_t fd = hyn::do_io(sockfd, accept_f, "accept", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, addr, addrlen);
+    if (fd >= 0)
+        hyn::FdMgr::GetInstance()->get(static_cast<int>(fd), true);
+    return static_cast<int>(fd);
+}
+
+//read
+ssize_t read(int fd, void *buf, size_t count) {
+    return hyn::do_io(fd, read_f, "read", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, buf, count);
+}
+
+ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
+    return hyn::do_io(fd, readv_f, "readv", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, iov, iovcnt);
+}
+
+ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
+    return hyn::do_io(sockfd, recv_f, "recv", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, buf, len, flags);
+}
+
+ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen) {
+    return hyn::do_io(sockfd, recvfrom_f, "recvfrom", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, buf, len, flags,
+                      src_addr, addrlen);
+}
+
+ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
+    return hyn::do_io(sockfd, recvmsg_f, "recvmsg", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, msg, flags);
+}
+
+//write
+ssize_t write(int fd, const void *buf, size_t count) {
+    return hyn::do_io(fd, write_f, "write", hyn::iomanager::IOManager::WRITE, SO_SNDTIMEO, buf, count);
+}
+
+ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
+    return hyn::do_io(fd, writev_f, "writev", hyn::iomanager::IOManager::WRITE, SO_SNDTIMEO, iov, iovcnt);
+}
+
+//send
+ssize_t send(int sockfd, const void *buf, size_t len, int flags) {
+    return hyn::do_io(sockfd, send_f, "send", hyn::iomanager::IOManager::WRITE, SO_SNDTIMEO, buf, len, flags);
+}
+
+ssize_t
+sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
+    return hyn::do_io(sockfd, sendto_f, "sendto", hyn::iomanager::IOManager::WRITE, SO_SNDTIMEO, buf, len, flags,
+                      dest_addr, addrlen);
+}
+
+ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags) {
+    return hyn::do_io(sockfd, sendmsg_f, "sendmsg", hyn::iomanager::IOManager::WRITE, SO_SNDTIMEO, msg, flags);
+}
+
+//close
+int close(int fd) {
+    if (!hyn::s_hook_enable)
+        return close_f(fd);
+    auto ctx = hyn::FdMgr::GetInstance()->get(fd);
+    if (ctx) {
+        auto iom = hyn::iomanager::IOManager::GetThis();
+        if (iom)
+            iom->cancelAll(fd);
+        hyn::FdMgr::GetInstance()->del(fd);
+    }
+    return close_f(fd);
+}
+
+int fcntl(int fd, int cmd, ... /* arg */ ) {
+    va_list va;
+    va_start(va, cmd);
+    switch (cmd) {
+        case F_SETFL: {
+            int arg = va_arg(va, int);
+            va_end(va);
+            auto ctx = hyn::FdMgr::GetInstance()->get(fd);
+            if (!ctx || ctx->is_close() || !ctx->is_socket())
+                return fcntl_f(fd, cmd, arg);
+            //将 arg 参数的 O_NONBLOCK 位设置为 ctx->is_sys_nonblock() 的值
+            ctx->set_is_usr_nonblock(arg & O_NONBLOCK);
+            if (ctx->is_sys_nonblock()) {
+                arg |= O_NONBLOCK;
+            } else {
+                arg &= ~O_NONBLOCK;
+            }
+            return fcntl_f(fd, cmd, arg);
+        }
+        case F_GETFL: {
+            va_end(va);
+            int arg = fcntl_f(fd, cmd);
+            auto ctx = hyn::FdMgr::GetInstance()->get(fd);
+            if (!ctx || ctx->is_close() || !ctx->is_socket())
+                return arg;
+            if (ctx->is_usr_nonblock()) {
+                return arg | O_NONBLOCK;
+            } else {
+                return arg & ~O_NONBLOCK;
+            }
+        }
+        case F_DUPFD:
+        case F_DUPFD_CLOEXEC:
+        case F_SETFD:
+        case F_SETOWN:
+        case F_SETSIG:
+        case F_SETLEASE:
+        case F_NOTIFY:
+#ifdef F_SETPIPE_SZ
+        case F_SETPIPE_SZ:
+#endif
+        {
+            int arg = va_arg(va, int);
+            va_end(va);
+            return fcntl_f(fd, cmd, arg);
+        }
+        case F_GETFD:
+        case F_GETOWN:
+        case F_GETSIG:
+        case F_GETLEASE:
+#ifdef F_GETPIPE_SZ
+        case F_GETPIPE_SZ:
+#endif
+        {
+            va_end(va);
+            return fcntl_f(fd, cmd);
+        }
+        case F_SETLK:
+        case F_SETLKW:
+        case F_GETLK: {
+            struct flock *arg = va_arg(va, struct flock*);
+            va_end(va);
+            return fcntl_f(fd, cmd, arg);
+        }
+        case F_GETOWN_EX:
+        case F_SETOWN_EX: {
+            struct f_owner_exlock *arg = va_arg(va, struct f_owner_exlock*);
+            va_end(va);
+            return fcntl_f(fd, cmd, arg);
+        }
+        default:
+            va_end(va);
+            return fcntl_f(fd, cmd);
+    }
+}
+
+int ioctl(int fd, unsigned long request, ...) {
+
+}
 
 }//extern "C"
