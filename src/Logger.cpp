@@ -2,7 +2,7 @@
 // Created by hyn on 2023/3/21.
 //
 
-#include "../include/Logger.h"
+#include "Logger.h"
 #include <ctime>
 #include <cstring>
 #include <iostream>

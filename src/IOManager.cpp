@@ -9,8 +9,8 @@
   */
 
 
-#include "../include/Logger.h"
-#include "../include/IOManager.h"
+#include "Logger.h"
+#include "IOManager.h"
 #include <sys/epoll.h>
 #include <cstring>
 #include <fcntl.h>

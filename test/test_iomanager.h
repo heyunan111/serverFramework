@@ -13,8 +13,8 @@
 #ifndef SERVERFRAMEWORK_TEST_IOMANAGER_H
 #define SERVERFRAMEWORK_TEST_IOMANAGER_H
 
-#include "../include/IOManager.h"
-#include "../hyn_include.h"
+#include "../src/IOManager.h"
+#include "../hyn.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <fcntl.h>

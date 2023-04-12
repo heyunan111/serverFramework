@@ -14,11 +14,11 @@
 namespace hyn::iomanager {
 
 /**
- *@作用：这是一个基于 Epoll 的 IO 协程调度器实现。
- *@包括：添加、删除、取消事件，并能触发事件的回调函数；
- *@包括：支持读事件和写事件；
- *@包括：取消所有事件；
- *@包括：多线程并发执行；
+ *@brief 这是一个基于 Epoll 的 IO 协程调度器实现。
+ *@param 添加、删除、取消事件，并能触发事件的回调函数；
+ *@param 支持读事件和写事件；
+ *@param 取消所有事件；
+ *@param 多线程并发执行；
  */
 class IOManager : public scheduler::Scheduler, public TimerManager {
 public:
@@ -26,7 +26,7 @@ public:
     typedef mutex::RWMutex RWMutexType;
 
     /**
-     * IO事件
+     *@brief IO事件
      */
     enum Event {
         ///无事件
@@ -39,8 +39,7 @@ public:
 
 private:
     /**
-     * 存储了一个文件句柄的事件上下文，其中包括读和写两个事件的协程、调度器和回调函数。还包括事件关联的句柄、
-     * 当前的事件和一个互斥锁。
+     * @brife 存储了一个文件句柄的事件上下文，其中包括读和写两个事件的协程、调度器和回调函数。还包括事件关联的句柄、当前的事件和一个互斥锁。
      */
     struct FdContext {
         typedef mutex::Mutex MutexType;
@@ -54,23 +53,21 @@ private:
         };
 
         /**
-         *@作用：获取事件上下文
-         *@参数：事件类型
-         *@返回值：事件上下文
+         *@brief：获取事件上下文
+         *@parma：事件类型
+         *@return：事件上下文
          */
         EventContext &get_context(Event event);
 
         /**
-         *@作用：重置事件上下文
-         *@参数：待重置的上下文类
-         *@返回值：null
+         *@brief：重置事件上下文
+         *@parma：待重置的上下文类
          */
         void ResetContext(EventContext &ctx);
 
         /**
-         *@作用：触发事件
-         *@参数：事件类型
-         *@返回值：null
+         *@brief：触发事件
+         *@parma：事件类型
          */
         void triggerEvent(Event event);
 
@@ -88,52 +85,49 @@ private:
 
 public:
     /**
-     *@作用：构造
-     *@参数：线程数默认 1
-     *@参数：是否将调用线程包含进去
-     *@参数：调度器的名称
-     *@返回值：null
+     *@brief：构造
+     *@parma：线程数默认 1
+     *@parma：是否将调用线程包含进去
+     *@parma：调度器的名称
      */
     explicit IOManager(size_t thread = 1, bool use_call = true, const std::string &name = "");
 
     ~IOManager() override;
 
     /**
-     *@作用：添加事件
-     *@参数：socket句柄
-     *@参数：事件类型
-     *@参数：事件回调函数
-     *@返回值：添加成功放回0，失败-1
+     *@brief：添加事件
+     *@parma：socket句柄
+     *@parma：事件类型
+     *@parma：事件回调函数
+     *@return：添加成功放回0，失败-1
      */
     int addEvent(int fd, Event event, std::function<void()> cb = nullptr);
 
     /**
-     *@作用：删除事件
-     *@参数：socket句柄
-     *@参数：事件类型
-     *@返回值：是否成功
+     *@brief：删除事件
+     *@parma：socket句柄
+     *@parma：事件类型
+     *@return：是否成功
      */
     bool delEvent(int fd, Event event);
 
     /**
-     *@作用：取消事件,强制执行
-     *@参数：socket句柄
-     *@参数：事件类型
-     *@返回值：是否成功
+     *@brief：取消事件,强制执行
+     *@parma：socket句柄
+     *@parma：事件类型
+     *@return：是否成功
      */
     bool cancelEvent(int fd, Event event);
 
     /**
-     *@作用：全部取消
-     *@参数：句柄
-     *@返回值：是否成功
+     *@brief：全部取消
+     *@parma：句柄
+     *@return：是否成功
      */
     bool cancelAll(int fd);
 
     /**
-     *@作用：返回当前的IOManager
-     *@参数：null
-     *@返回值：null
+     *@brief：返回当前的IOManager
      */
     static IOManager *GetThis();
 
@@ -149,9 +143,9 @@ protected:
     void onTimerInsertedAtFront() override;
 
     /**
-     *@作用：重置socket上下文句柄容器大小
-     *@参数：大小
-     *@返回值：null
+     *@brief：重置socket上下文句柄容器大小
+     *@param：大小
+     *@return：null
      */
     void contextResize(size_t size);
 

@@ -23,9 +23,9 @@
 namespace hyn {
 
 /**
- * @作用 文件句柄上下文类
- * @参数 管理文件句柄类型(是否socket)
- * @参数 是否阻塞,是否关闭,读/写超时时间
+ * @brief 文件句柄上下文类
+ * @note 管理文件句柄类型(是否socket)
+ * @note 是否阻塞,是否关闭,读/写超时时间
  */
 class FdCtx : public std::enable_shared_from_this<FdCtx> {
 public:
@@ -82,15 +82,15 @@ public:
     ~FDManger() = default;
 
     /**
-     *@作用：获取文件句柄类,fd不存在的情况下是否自动创建
-     *@参数：文件句柄
-     *@参数：fd不存在的情况下是否自动创建
+     *@brief：获取文件句柄类,fd不存在的情况下是否自动创建
+     *@param：文件句柄
+     *@param：fd不存在的情况下是否自动创建
      */
     FdCtx::ptr get(int fd, bool auto_create = false);
 
     /**
-     *@作用：删除文件句柄类
-     *@参数：fd
+     *@brief：删除文件句柄类
+     *@param：fd
      */
     void del(int fd);
 

@@ -12,9 +12,10 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#include "../include/util.h"
-#include "../include/Logger.h"
-#include "../include/fiber.h"
+#include "util.h"
+#include "Logger.h"
+#include "fiber.h"
+
 pid_t hyn::util::GetThreadId() {
     return syscall(SYS_gettid);
 }

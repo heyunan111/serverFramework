@@ -9,8 +9,8 @@
   */
 #include <utility>
 
-#include "../include/Timer.h"
-#include "../include/util.h"
+#include "Timer.h"
+#include "util.h"
 
 namespace hyn {
 

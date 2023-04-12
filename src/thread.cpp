@@ -9,14 +9,14 @@
   */
 #include <utility>
 
-#include "../include/thread.h"
-#include "../include/Logger.h"
-#include "../include/util.h"
+#include "thread.h"
+#include "Logger.h"
+#include "util.h"
 
 static thread_local hyn::thread::Thread *t_thread = nullptr;
 static thread_local std::string t_thread_name = "UNKNOW";
 
-hyn::thread::Thread::Thread(std::function<void()> cb, const std::string &name):m_cb(std::move(cb)),m_name(name){
+hyn::thread::Thread::Thread(std::function<void()> cb, const std::string &name) : m_cb(std::move(cb)), m_name(name) {
     if (name.empty())
         m_name = "UNKNOW";
     int rt = pthread_create(&m_thread, nullptr, &Thread::run, this);

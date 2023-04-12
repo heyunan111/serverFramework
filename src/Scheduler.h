@@ -27,11 +27,11 @@ N-M协程调度器的优点是可以充分利用多核处理器的性能，实�
  */
 
 /**
- *@类名：Scheduler
- *@参数：mutexType m_mutex;
- *@参数：std::vector<thread::Thread::ptr> m_thread_pool;     线程对象列表
- *@参数：std::list<Task> m_task_queue;                       任务集合
- *@参数：std::string m_name;
+ *@brief：Scheduler
+ *@parma：mutexType m_mutex;
+ *@parma：std::vector<thread::Thread::ptr> m_thread_pool;     线程对象列表
+ *@parma：std::list<Task> m_task_queue;                       任务集合
+ *@parma：std::string m_name;
  */
 
 class Scheduler : boost::noncopyable {
@@ -40,11 +40,10 @@ public:
     typedef hyn::mutex::Mutex mutexType;
 
     /**
-     *@作用：构造函数
-     *@参数：创建的线程数
-     *@参数：是否使用当前线程作为调度器的主线程
-     *@参数：调度器的名称
-     *@返回值：null
+     *@brief：构造函数
+     *@parma：创建的线程数
+     *@parma：是否使用当前线程作为调度器的主线程
+     *@parma：调度器的名称
      */
     explicit Scheduler(size_t thread = 1, bool use_caller = true, const std::string &name = "");
 
@@ -53,24 +52,19 @@ public:
     [[nodiscard]] const std::string &get_name() const { return m_name; }
 
     /**
-     *@作用：启动调度器
-     *@参数：null
-     *@返回值：null
+     *@brife：启动调度器
      */
     void start();
 
     /**
-     *@作用：停止协调调度器
-     *@参数：null
-     *@返回值：null
+     *@brief：停止协调调度器
      */
     void stop();
 
     /**
-     *@作用：添加任务
-     *@参数：fc：可执行函数
-     *@参数：thread：绑定的线程id，默认-1
-     *@返回值：null
+     *@brief：添加任务
+     *@param：fc：可执行函数
+     *@param：thread：绑定的线程id，默认-1
      */
     template<typename fiber_or_callback>
     void schedule(fiber_or_callback fc, int thread = -1) {

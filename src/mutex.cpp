@@ -10,8 +10,8 @@
 
 
 
-#include "../include/mutex.h"
-#include "../include/Logger.h"
+#include "mutex.h"
+#include "Logger.h"
 
 hyn::mutex::Semaphore::Semaphore(const uint32_t count) {
     if (sem_init(&m_semaphore, 0, count)) {

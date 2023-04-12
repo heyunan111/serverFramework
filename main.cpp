@@ -1,9 +1,5 @@
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <openssl/evp.h>
-#include <openssl/err.h>
+#include <iostream>
 
-int main(int argc, char *argv[]) {
+int main() {
 
 }

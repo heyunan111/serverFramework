@@ -14,7 +14,7 @@
 #define SERVERFRAMEWORK_TEST_HOOK_H
 
 #include <string>
-#include "../hyn_include.h"
+#include "../hyn.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
