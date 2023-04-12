@@ -1,9 +1,9 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 
-#include "hyn_include.h"
-#include "test/test_hook.h"
+int main(int argc, char *argv[]) {
 
-int main() {
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test.log");
-    test_main();
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
 }
