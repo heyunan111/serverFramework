@@ -9,6 +9,11 @@
   */
 #pragma once
 
+#include <dlfcn.h>
+#include <string>
+#include <sys/uio.h>
+#include <sys/ioctl.h>
+#include <cstdarg>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>

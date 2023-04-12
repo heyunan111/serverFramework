@@ -27,8 +27,10 @@ Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name) : 
     if (use_caller) {
         fiber::Fiber::GetThis();//确保当前线程中有协程
         --thread;
+
         assert(GetThis() == nullptr);
         t_scheduler = this;
+
         m_root_fiber.reset(new fiber::Fiber([this] { run(); }, 0, true));
         thread::Thread::SetName(name);
         t_fiber = m_root_fiber.get();
@@ -130,7 +132,7 @@ void Scheduler::tickle() {
  *      无任务，执行idle
  * */
 void Scheduler::run() {
-    //debug("scheduler run name:%s", m_name.c_str());
+    debug("scheduler run name:%s", m_name.c_str());
     set_hook_enable(true);
     SetThis();  //把当前线程的schedule置为他自己
     if (util::GetThreadId() != m_root_thread_id) {

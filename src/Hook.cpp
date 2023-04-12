@@ -12,14 +12,10 @@
 #include "../include/IOManager.h"
 #include "../include/FDManger.h"
 #include "../include/Logger.h"
-#include <dlfcn.h>
-#include <string>
-#include <sys/uio.h>
-#include <sys/ioctl.h>
-#include <cstdarg>
-
+#include "../include/iniFile.h"
 
 namespace hyn {
+
 static uint64_t s_connect_timeout = -1;
 static thread_local bool s_hook_enable = false;
 
@@ -97,6 +93,8 @@ do_io(int fd, OriginFun func, const char *hook_fun_name, iomanager::IOManager::E
     }
     //如果函数返回值为 -1 并且全局变量 errno 的值为 EAGAIN，则表示当前操作不能立即完成，需要等待一段时间后再次尝试。
     if (n == -1 && errno == EAGAIN) {
+        debug("do io");
+
         iomanager::IOManager *iom = iomanager::IOManager::GetThis();
         Timer::ptr timer;
         std::weak_ptr<time_info> weak_time_info(tinfo);
@@ -167,6 +165,7 @@ void hook_init() {
 
 struct HookIniter {
     HookIniter() {
+        ///FIXME :ini配置
         hook_init();
     }
 };

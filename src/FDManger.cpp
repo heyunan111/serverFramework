@@ -85,14 +85,16 @@ FDManger::FDManger() {
 }
 
 FdCtx::ptr FDManger::get(int fd, bool auto_create) {
-    if (fd < 0)
+    if (fd == -1)
         return nullptr;
     RWMutexType::ReadLock Rlock(m_mutex);
-    if (fd >= m_datas.size()) {
+    if (fd >= (int) m_datas.size()) {
         if (!auto_create)
             return nullptr;
     } else {
-        return m_datas[fd];
+        if (m_datas[fd] || !auto_create) {
+            return m_datas[fd];
+        }
     }
     Rlock.unlock();
 
