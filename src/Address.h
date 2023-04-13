@@ -19,7 +19,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
-
+#include <sstream>
 namespace hyn {
 
 class IPAddress;
@@ -39,12 +39,12 @@ public:
     /**
      *@brief 返回协议簇
      */
-    int getFamily() const;
+    [[nodiscard]] int getFamily() const;
 
     /**
      *@brief 返回sockaddr指针，只读
      */
-    virtual const sockaddr *getAddr() const = 0;
+    [[nodiscard]] virtual const sockaddr *getAddr() const = 0;
 
     /**
      *@brief 返回sockaddr指针，读写
@@ -54,7 +54,7 @@ public:
     /**
      *@brief 返回sockaddr长度
      */
-    virtual socklen_t getAddrLen() const = 0;
+    [[nodiscard]] virtual socklen_t getAddrLen() const = 0;
 
     /**
      *@brief 可读性输出地址
@@ -64,7 +64,7 @@ public:
     /**
      *@brief 返回可读性字符串
      */
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
     /**
      *@brief 小于
@@ -124,7 +124,7 @@ public:
 
     virtual IPAddress::ptr subnetMask(uint32_t prefix_len) = 0;
 
-    virtual uint32_t getPort() const = 0;
+    [[nodiscard]] virtual uint32_t getPort() const = 0;
 
     virtual void setPort(uint16_t port) = 0;
 };
@@ -133,13 +133,15 @@ class IPv4Address : public IPAddress {
 public:
     std::shared_ptr<IPv4Address> ptr;
 
-    IPv4Address(uint32_t address = INADDR_ANY, uint32_t port = 0);
+    explicit IPv4Address(const sockaddr_in &addr);
+
+    explicit IPv4Address(const std::string &addr = "", uint32_t port = 0);
 
     sockaddr *getAddr() override;
 
-    const sockaddr *getAddr() const override;
+    [[nodiscard]] const sockaddr *getAddr() const override;
 
-    socklen_t getAddrLen() const override;
+    [[nodiscard]] socklen_t getAddrLen() const override;
 
     std::ostream &insert(std::ostream &os) const override;
 
@@ -149,19 +151,21 @@ public:
 
     IPAddress::ptr subnetMask(uint32_t prefix_len) override;
 
-    uint32_t getPort() const override;
+    [[nodiscard]] uint32_t getPort() const override;
 
     void setPort(uint16_t port) override;
 
 private:
-    sockaddr_in m_addr;
+    sockaddr_in m_addr{};
 };
 
 class IPv6Address : public IPAddress {
 public:
     std::shared_ptr<IPv6Address> ptr;
 
-    IPv6Address(uint32_t address = INADDR_ANY, uint32_t port = 0);
+    IPv6Address(const sockaddr_in6 &addr);
+
+    IPv6Address(const std::string &addr, uint32_t port = 0);
 
     sockaddr *getAddr() override;
 
