@@ -70,11 +70,43 @@ bool Address::operator!=(const Address &rhs) const {
 }
 
 Address::ptr Address::Create(const sockaddr *addr, socklen_t addrlen) {
-    return hyn::Address::ptr();
+    if (addr == nullptr)
+        return nullptr;
+    Address::ptr res;
+    switch (addr->sa_family) {
+        case AF_INET:
+            res.reset(new IPv4Address(*(const sockaddr_in *) addr));
+            break;
+        case AF_INET6:
+            res.reset(new IPv6Address(*(const sockaddr_in6 *) addr));
+            break;
+        default:
+            res.reset(new UnknowAddress(*addr));
+            break;
+    }
+    return res;
 }
 
 bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host, int family, int type, int protocol) {
-    return false;
+    addrinfo hints{}, *res;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = nullptr;
+    hints.ai_family = family;
+    hints.ai_flags = 0;
+    hints.ai_canonname = nullptr;
+    hints.ai_next = nullptr;
+    hints.ai_protocol = protocol;
+    hints.ai_socktype = type;
+
+    std::string node;
+
+    //对主机名进行解析，代码中首先判断主机名是否是 IPv6 地址，如果是，则通过字符串查找找到 IPv6 地址中的节点和服务信息；
+    //如果不是，则从主机名字符串中查找节点和服务信息。
+
+    //接下来将节点和服务信息作为参数调用 getaddrinfo() 函数进行地址解析。如果解析失败，则返回 false，否则将解析结果中的地址信息存储在
+    //result 中，其中每个地址通过 Create() 函数创建一个 Address 类型的智能指针，并将其加入到 result 中。
+
+    //最后释放 getaddrinfo() 函数分配的资源，返回 result 是否为空的结果。
 }
 
 Address::ptr Address::LockupAny(const std::string &host, int type, int protocol) {
