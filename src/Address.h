@@ -9,6 +9,7 @@
   */
 #pragma once
 
+#include <netdb.h>
 #include <memory>
 #include <string>
 #include <sys/types.h>
@@ -34,7 +35,7 @@ public:
     /**
      *@brief虚析构函数
      */
-    virtual ~Address();
+    virtual ~Address() = default;
 
     /**
      *@brief 返回协议簇
@@ -118,14 +119,43 @@ class IPAddress : public Address {
 public:
     typedef std::shared_ptr<IPAddress> ptr;
 
+    /**
+     * @brief 通过域名,IP,服务器名创建IPAddress
+     * @param[in] address 域名,IP,服务器名等.举例: www.sylar.top
+     * @param[in] port 端口号
+     * @return 调用成功返回IPAddress,失败返回nullptr
+     */
+    static ptr Create(const std::string &address, uint16_t port);
+
+    /**
+     *@brief 获取该地址的广播地址
+     *@param prefix_len 子网掩码位数
+     *@return 成功返回IPAddress，失败nullptr
+     */
     virtual IPAddress::ptr broadcastAddress(uint32_t prefix_len) = 0;
 
+    /**
+     *@brief 获取该地址的网段
+     *@param prefix_len 子网掩码位数
+     *@return 成功返回IPAddress，失败nullptr
+     */
     virtual IPAddress::ptr networkAddress(uint32_t prefix_len) = 0;
 
+    /**
+     *@brief 获取子网掩码地址
+     *@param prefix_len 子网掩码位数
+     *@return 成功返回IPAddress，失败nullptr
+     */
     virtual IPAddress::ptr subnetMask(uint32_t prefix_len) = 0;
 
+    /**
+     *@brief 获取端口号
+     */
     [[nodiscard]] virtual uint32_t getPort() const = 0;
 
+    /**
+     *@brief 设置端口号
+     */
     virtual void setPort(uint16_t port) = 0;
 };
 
@@ -133,8 +163,17 @@ class IPv4Address : public IPAddress {
 public:
     std::shared_ptr<IPv4Address> ptr;
 
+    /**
+    * @brief 通过sockaddr_in构造IPv4Address
+    * @param[in] address sockaddr_in结构体
+    */
     explicit IPv4Address(const sockaddr_in &addr);
 
+    /**
+    * @brief 通过地址和端口构造IPv4Address
+    * @param[in] address IPv4地址
+    * @param[in] port 端口号
+    */
     explicit IPv4Address(const std::string &addr = "", uint32_t port = 0);
 
     sockaddr *getAddr() override;
@@ -163,8 +202,20 @@ class IPv6Address : public IPAddress {
 public:
     std::shared_ptr<IPv6Address> ptr;
 
+    IPv6Address();
+
+    /**
+     *@brief 通过sockaddr_in6构造
+     *@param addr sockaddr_in6
+     */
     explicit IPv6Address(const sockaddr_in6 &addr);
 
+    /**
+     *@brief 通过地址和端口构造
+     *@param addr IPv6地址
+     *@param port 端口
+     *@return
+     */
     explicit IPv6Address(const std::string &addr, uint32_t port = 0);
 
     sockaddr *getAddr() override;
@@ -195,6 +246,10 @@ public:
 
     UnixAddress();
 
+    /**
+     * @brief 通过路径构造UnixAddress
+     * @param in path UnixSocket路径(长度小于UNIX_PATH_MAX)
+     */
     explicit UnixAddress(const std::string &path);
 
     sockaddr *getAddr() override;

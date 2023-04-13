@@ -8,8 +8,6 @@
   ******************************************************************************
   */
 
-
-
 #include "Address.h"
 #include "Logger.h"
 #include "endian.h"
@@ -69,6 +67,49 @@ bool Address::operator==(const Address &rhs) const {
 
 bool Address::operator!=(const Address &rhs) const {
     return !(*this == rhs);
+}
+
+Address::ptr Address::Create(const sockaddr *addr, socklen_t addrlen) {
+    return hyn::Address::ptr();
+}
+
+bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host, int family, int type, int protocol) {
+    return false;
+}
+
+Address::ptr Address::LockupAny(const std::string &host, int type, int protocol) {
+    return hyn::Address::ptr();
+}
+
+IPAddress::ptr IPAddress::Create(const std::string &address, uint16_t port) {
+    //AI_NUMERICHOST表示address参数必须是一个数值格式的地址，而不是主机名。
+    // AF_UNSPEC表示结果协议族既可以是IPv4，也可以是IPv6。
+
+    addrinfo hints{}, *res;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_NUMERICHOST;
+    hints.ai_family = AF_UNSPEC;
+
+    //getaddrinfo 函数的返回值为 0 表示成功，否则返回一个非零的错误码。如果成功，res 参数指向一个链表，
+    // 我们需要遍历这个链表来获取网络地址信息，然后将这些信息存储到套接字地址结构体中，最终用于套接字的创
+    // 建和连接等操作。遍历完链表后，我们需要使用 freeaddrinfo 函数来释放 getaddrinfo 分配的内存空间。
+
+    int error_ = getaddrinfo(address.c_str(), nullptr, &hints, &res);
+    if (error_ != 0) {
+        error("IPAddress::Create getaddrinfo error,errno = %d", errno);
+        return nullptr;
+    }
+
+    try {
+        IPAddress::ptr result = std::dynamic_pointer_cast<IPAddress>(Address::Create(res->ai_addr, res->ai_addrlen));
+        if (result)
+            result->setPort(port);
+        freeaddrinfo(res);
+        return result;
+    } catch (...) {
+        freeaddrinfo(res);
+        return nullptr;
+    }
 }
 
 IPv4Address::IPv4Address(const sockaddr_in &addr) {
@@ -145,6 +186,10 @@ void IPv4Address::setPort(uint16_t port) {
     m_addr.sin_port = htons(port);
 }
 
+IPv6Address::IPv6Address() {
+    memset(&m_addr, 0, sizeof(m_addr));
+    m_addr.sin6_family = AF_INET6;
+}
 
 IPv6Address::IPv6Address(const sockaddr_in6 &addr) {
     m_addr = addr;
