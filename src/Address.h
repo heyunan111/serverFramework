@@ -163,15 +163,15 @@ class IPv6Address : public IPAddress {
 public:
     std::shared_ptr<IPv6Address> ptr;
 
-    IPv6Address(const sockaddr_in6 &addr);
+    explicit IPv6Address(const sockaddr_in6 &addr);
 
-    IPv6Address(const std::string &addr, uint32_t port = 0);
+    explicit IPv6Address(const std::string &addr, uint32_t port = 0);
 
     sockaddr *getAddr() override;
 
-    const sockaddr *getAddr() const override;
+    [[nodiscard]] const sockaddr *getAddr() const override;
 
-    socklen_t getAddrLen() const override;
+    [[nodiscard]] socklen_t getAddrLen() const override;
 
     std::ostream &insert(std::ostream &os) const override;
 
@@ -181,17 +181,19 @@ public:
 
     IPAddress::ptr subnetMask(uint32_t prefix_len) override;
 
-    uint32_t getPort() const override;
+    [[nodiscard]] uint32_t getPort() const override;
 
     void setPort(uint16_t port) override;
 
 private:
-    sockaddr_in6 m_addr;
+    sockaddr_in6 m_addr{};
 };
 
 class UnixAddress : public Address {
 public:
     std::shared_ptr<UnixAddress> ptr;
+
+    UnixAddress();
 
     UnixAddress(const std::string &path);
 
@@ -203,9 +205,13 @@ public:
 
     std::ostream &insert(std::ostream &os) const override;
 
+    void setAddrLen(uint32_t v);
+
+    std::string getPath() const;
+
 private:
-    sockaddr_un m_addr;
-    socklen_t m_length;
+    sockaddr_un m_addr{};
+    socklen_t m_length{};
 };
 
 class UnknowAddress : public Address {
