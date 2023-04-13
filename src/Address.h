@@ -195,19 +195,19 @@ public:
 
     UnixAddress();
 
-    UnixAddress(const std::string &path);
+    explicit UnixAddress(const std::string &path);
 
     sockaddr *getAddr() override;
 
-    const sockaddr *getAddr() const override;
+    [[nodiscard]] const sockaddr *getAddr() const override;
 
-    socklen_t getAddrLen() const override;
+    [[nodiscard]] socklen_t getAddrLen() const override;
 
     std::ostream &insert(std::ostream &os) const override;
 
     void setAddrLen(uint32_t v);
 
-    std::string getPath() const;
+    [[nodiscard]] std::string getPath() const;
 
 private:
     sockaddr_un m_addr{};
@@ -218,19 +218,26 @@ class UnknowAddress : public Address {
 public:
     std::shared_ptr<UnknowAddress> ptr;
 
-    UnknowAddress(int family);
+    explicit UnknowAddress(int family);
+
+    explicit UnknowAddress(const sockaddr &addr);
 
     sockaddr *getAddr() override;
 
-    const sockaddr *getAddr() const override;
+    [[nodiscard]] const sockaddr *getAddr() const override;
 
-    socklen_t getAddrLen() const override;
+    [[nodiscard]] socklen_t getAddrLen() const override;
 
     std::ostream &insert(std::ostream &os) const override;
 
 private:
-    sockaddr m_addr;
+    sockaddr m_addr{};
 };
+
+/**
+ *@brief 重载<<，流式输出address
+ */
+std::ostream &operator<<(std::ostream &os, const Address &addr);
 
 }//namespace hyn
 

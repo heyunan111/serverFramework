@@ -289,4 +289,34 @@ std::string UnixAddress::getPath() const {
 }
 
 
+UnknowAddress::UnknowAddress(int family) {
+    memset(&m_addr, 0, sizeof(m_addr));
+    m_addr.sa_family = family;
+}
+
+UnknowAddress::UnknowAddress(const sockaddr &addr) {
+    m_addr = addr;
+}
+
+sockaddr *UnknowAddress::getAddr() {
+    return &m_addr;
+}
+
+const sockaddr *UnknowAddress::getAddr() const {
+    return &m_addr;
+}
+
+socklen_t UnknowAddress::getAddrLen() const {
+    return sizeof(m_addr);
+}
+
+std::ostream &UnknowAddress::insert(std::ostream &os) const {
+    os << "[UnknownAddress family=" << m_addr.sa_family << "]";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Address &addr) {
+    return addr.insert(os);
+}
+
 }
