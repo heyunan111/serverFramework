@@ -99,6 +99,7 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     hints.ai_socktype = type;
 
     std::string node;
+    const char *service = nullptr;
 
     //对主机名进行解析，代码中首先判断主机名是否是 IPv6 地址，如果是，则通过字符串查找找到 IPv6 地址中的节点和服务信息；
     //如果不是，则从主机名字符串中查找节点和服务信息。
@@ -111,6 +112,19 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
 
 Address::ptr Address::LockupAny(const std::string &host, int type, int protocol) {
     return hyn::Address::ptr();
+}
+
+std::shared_ptr<IPAddress> Address::LookupAnyIPAddress(const std::string &host, int family, int type, int protocol) {
+
+}
+
+bool Address::GetInterfaceAddresses(std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &result, int family) {
+
+}
+
+bool Address::GetInterfaceAddresses(std::vector<std::pair<Address::ptr, uint32_t>> &result, const std::string &iface,
+                                    int family) {
+
 }
 
 IPAddress::ptr IPAddress::Create(const std::string &address, uint16_t port) {
@@ -179,7 +193,7 @@ std::ostream &IPv4Address::insert(std::ostream &os) const {
         error("IPv4Address::insert inet_ntop error");
         return os;
     }
-    os << buff;
+    os << buff << ":" << ntohs(m_addr.sin_port);
     return os;
 }
 
@@ -254,7 +268,7 @@ std::ostream &IPv6Address::insert(std::ostream &os) const {
         error("IPv6Address::insert inet_ntop error");
         return os;
     }
-    os << buff;
+    os << "[" << buff << "]:" << ntohs(m_addr.sin6_port);;
     return os;
 }
 
