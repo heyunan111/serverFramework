@@ -31,11 +31,18 @@ void test_ifce() {
     std::multimap<std::string, std::pair<hyn::Address::ptr, uint32_t>> res;
     bool v = hyn::Address::GetInterfaceAddresses(res);
     if (!v) {
-        //info("error");
+        info("error");
         return;
     }
     for (auto &i: res) {
-        std::cout << i.first << " - " << i.second.first->toString() << " - " << i.second.second;
-        //info("%s - %s - %s", i.first.c_str(), i.second.first->toString().c_str(), i.second.second);
+        //info("%s -- %d", i.first.c_str(), i.second.second);
+        info("%s - %s - %d", i.first.c_str(), i.second.first->toString().c_str(), i.second.second);
+    }
+}
+
+void test_ipv4() {
+    auto addr = hyn::IPAddress::Create("127.0.0.8");
+    if (addr) {
+        info("%s", addr->toString().c_str());
     }
 }

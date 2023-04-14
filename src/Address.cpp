@@ -261,7 +261,7 @@ IPAddress::ptr IPAddress::Create(const std::string &address, uint16_t port) {
 
     int error_ = getaddrinfo(address.c_str(), nullptr, &hints, &res);
     if (error_ != 0) {
-        error("IPAddress::Create getaddrinfo error,errno = %d", errno);
+        error("IPAddress::Create getaddrinfo error,errno = %d,errtr = %s", errno, strerror(errno));
         return nullptr;
     }
 
@@ -313,7 +313,6 @@ std::ostream &IPv4Address::insert(std::ostream &os) const {
         return os;
     }
     os << buff << ":" << ntohs(m_addr.sin_port);
-    debug("%s", buff);
     return os;
 }
 

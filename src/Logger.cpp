@@ -63,6 +63,7 @@ hyn::logger::Logger::log(hyn::logger::Logger::Level level, const char *file, int
 
     va_list arg_ptr;
     va_start(arg_ptr, format);
+    assert(format != nullptr);
     len = vsnprintf(nullptr, 0, format, arg_ptr);
     va_end(arg_ptr);
     if (len > 0) {

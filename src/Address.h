@@ -155,7 +155,7 @@ public:
      * @param[in] port 端口号
      * @return 调用成功返回IPAddress,失败返回nullptr
      */
-    static ptr Create(const std::string &address, uint16_t port);
+    static ptr Create(const std::string &address, uint16_t port = 0);
 
     /**
      *@brief 获取该地址的广播地址
