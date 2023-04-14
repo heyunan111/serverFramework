@@ -9,7 +9,11 @@
   */
 #pragma once
 
+#include "src/_Singleton.h"
+#include "src/Address.h"
+#include "src/endian.h"
 #include "src/exceptdef.h"
+#include "src/FDManger.h"
 #include "src/fiber.h"
 #include "src/Hook.h"
 #include "src/Logger.h"
@@ -18,6 +22,7 @@
 #include "src/mutex.h"
 #include "src/Scheduler.h"
 #include "src/singleton.h"
+#include "src/Socket.h"
 #include "src/thread.h"
 #include "src/Timer.h"
 #include "src/util.h"
