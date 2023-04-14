@@ -313,6 +313,7 @@ std::ostream &IPv4Address::insert(std::ostream &os) const {
         return os;
     }
     os << buff << ":" << ntohs(m_addr.sin_port);
+    debug("%s", buff);
     return os;
 }
 

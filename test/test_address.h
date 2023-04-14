@@ -31,10 +31,11 @@ void test_ifce() {
     std::multimap<std::string, std::pair<hyn::Address::ptr, uint32_t>> res;
     bool v = hyn::Address::GetInterfaceAddresses(res);
     if (!v) {
-        info("error");
+        //info("error");
         return;
     }
     for (auto &i: res) {
-        info("%s - %s - %s", i.first.c_str(), i.second.first->toString().c_str(), i.second.second);
+        std::cout << i.first << " - " << i.second.first->toString() << " - " << i.second.second;
+        //info("%s - %s - %s", i.first.c_str(), i.second.first->toString().c_str(), i.second.second);
     }
 }

@@ -49,7 +49,7 @@ hyn::logger::Logger::log(hyn::logger::Logger::Level level, const char *file, int
     memset(timestamp, 0, sizeof(timestamp));
     strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", ptm);
     //std::cout << timestamp << std::endl;
-    int len;
+    int len = 0;
     const char *fmt = "%s %s %s:%d ";
     len = snprintf(nullptr, 0, fmt, timestamp, s_level[level], file, line);
     if (len > 0) {
