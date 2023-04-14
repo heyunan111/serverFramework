@@ -9,6 +9,7 @@
   */
 #pragma once
 
+#include <ifaddrs.h>
 #include <netdb.h>
 #include <memory>
 #include <string>
@@ -21,6 +22,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+
 namespace hyn {
 
 class IPAddress;
@@ -88,7 +90,7 @@ public:
      *@param in addrlen sockaddr的长度
      *@return 返回和sockaddr匹配的Address,失败返回nullptr
      */
-    static ptr Create(const sockaddr *addr, socklen_t addrlen);
+    static Address::ptr Create(const sockaddr *addr);
 
     /**
      *@brief 通过host地址返回对应条件的所有address
@@ -110,7 +112,7 @@ public:
      * @param[in] protocol 协议,IPPROTO_TCP、IPPROTO_UDP 等
      * @return 返回满足条件的任意Address,失败返回nullptr
      */
-    static ptr LockupAny(const std::string &host, int type = 0, int protocol = 0);
+    static ptr LockupAny(const std::string &host, int family = AF_INET, int type = 0, int protocol = 0);
 
     /**
      * @brief 通过host地址返回对应条件的任意IPAddress
@@ -125,7 +127,7 @@ public:
 
     /**
      * @brief 返回本机所有网卡的<网卡名, 地址, 子网掩码位数>
-     * @param[out] result 保存本机所有地址
+     * @param[out] result 保存本机所有地址,键为网卡接口名称，值为IP地址和子网掩码
      * @param[in] family 协议族(AF_INT, AF_INT6, AF_UNIX)
      * @return 是否获取成功
      */
@@ -134,7 +136,7 @@ public:
 
     /**
      * @brief 获取指定网卡的地址和子网掩码位数
-     * @param[out] result 保存指定网卡所有地址
+     * @param[out] result 保存指定网卡所有地址,键为网卡接口名称，值为IP地址和子网掩码
      * @param[in] iface 网卡名称
      * @param[in] family 协议族(AF_INT, AF_INT6, AF_UNIX)
      * @return 是否获取成功

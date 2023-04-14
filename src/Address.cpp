@@ -8,6 +8,7 @@
   ******************************************************************************
   */
 
+
 #include "Address.h"
 #include "Logger.h"
 #include "endian.h"
@@ -69,7 +70,7 @@ bool Address::operator!=(const Address &rhs) const {
     return !(*this == rhs);
 }
 
-Address::ptr Address::Create(const sockaddr *addr, socklen_t addrlen) {
+Address::ptr Address::Create(const sockaddr *addr) {
     if (addr == nullptr)
         return nullptr;
     Address::ptr res;
@@ -88,7 +89,7 @@ Address::ptr Address::Create(const sockaddr *addr, socklen_t addrlen) {
 }
 
 bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host, int family, int type, int protocol) {
-    addrinfo hints{}, *res;
+    addrinfo hints{}, *res, *next;
     hints.ai_addrlen = 0;
     hints.ai_addr = nullptr;
     hints.ai_family = family;
@@ -98,33 +99,151 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     hints.ai_protocol = protocol;
     hints.ai_socktype = type;
 
+    ///主机名
     std::string node;
+    ///服务名
     const char *service = nullptr;
 
     //对主机名进行解析，代码中首先判断主机名是否是 IPv6 地址，如果是，则通过字符串查找找到 IPv6 地址中的节点和服务信息；
+    if (!host.empty() && host[0] == '[') {
+        //该函数返回一个指向第一个匹配项的指针。如果没有找到匹配项，则返回NULL
+        const char *end_of_ipv6 = strchr(host.c_str(), ']');
+        if (end_of_ipv6) {
+            if ((*end_of_ipv6 + 1) == ':') {
+                service = end_of_ipv6 + 2;
+            }
+            node = host.substr(1, end_of_ipv6 - host.c_str() - 1);
+        }
+    }
+
     //如果不是，则从主机名字符串中查找节点和服务信息。
+    if (node.empty()) {
+        service = (const char *) memchr(host.c_str(), ':', host.size());
+        if (service) {
+            if (!strchr(service + 1, ':')) {
+                node = host.substr(0, service - host.c_str());
+                ++service;
+            }
+        }
+    }
+
+    if (node.empty()) {
+        node = host;
+    }
 
     //接下来将节点和服务信息作为参数调用 getaddrinfo() 函数进行地址解析。如果解析失败，则返回 false，否则将解析结果中的地址信息存储在
+    int error_ = getaddrinfo(node.c_str(), service, &hints, &res);
+    if (error_) {
+        debug("Address::Lookup getaddrinfo error host :%s,family :%d, type :%d,err :%d,errstr :%s", host.c_str(),
+              family,
+              type, errno, strerror(errno));
+        return false;
+    }
+
     //result 中，其中每个地址通过 Create() 函数创建一个 Address 类型的智能指针，并将其加入到 result 中。
+    next = res;
+    while (next) {
+        result.emplace_back(Create(next->ai_addr));
+        next = next->ai_next;
+    }
 
     //最后释放 getaddrinfo() 函数分配的资源，返回 result 是否为空的结果。
+    freeaddrinfo(res);
+    return !result.empty();
 }
 
-Address::ptr Address::LockupAny(const std::string &host, int type, int protocol) {
-    return hyn::Address::ptr();
+Address::ptr Address::LockupAny(const std::string &host, int family, int type, int protocol) {
+    std::vector<Address::ptr> res;
+    if (Address::Lookup(res, host, family, type, protocol))
+        return res[0];
+    return nullptr;
 }
 
 std::shared_ptr<IPAddress> Address::LookupAnyIPAddress(const std::string &host, int family, int type, int protocol) {
-
+    std::vector<Address::ptr> res;
+    if (Lookup(res, host, family, type, protocol)) {
+        for (auto &i: res) {
+            auto v = std::dynamic_pointer_cast<IPAddress>(i);
+            if (v)
+                return v;
+        }
+    }
+    return nullptr;
 }
 
+/*ifa_next 是一个指向下一个接口地址结构体的指针。通过遍历这个链表，可以获得所有网络接口的信息。
+ifa_name 是一个字符串，表示这个接口的名称。
+ifa_flags 是一个无符号整数，表示这个接口的属性。
+ifa_addr 是一个指向 sockaddr 结构体的指针，表示这个接口的 IP 地址。
+ifa_netmask 是一个指向 sockaddr 结构体的指针，表示这个接口的子网掩码。
+ifa_ifu 是一个共用体，包含了接口的广播地址或点对点目标地址。
+ifa_data 是一个指向地址特定数据的指针，用于存储有关接口的其他信息。*/
 bool Address::GetInterfaceAddresses(std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &result, int family) {
+    ifaddrs *next, *res;
+    if (getifaddrs(&res) != 0) {
+        debug("Address::GetInterfaceAddresses error err = %d, errstr = %s", errno, strerror(errno));
+        return false;
+    }
 
+    try {
+        for (next = res; next; next = next->ifa_next) {
+            Address::ptr addr;
+            uint32_t prefix_len = ~0u;
+            if (family != AF_UNSPEC && family != next->ifa_addr->sa_family)
+                continue;
+
+            switch (next->ifa_addr->sa_family) {
+                case AF_INET: {
+                    addr = Address::Create(next->ifa_addr);
+                    uint32_t netmask = ((sockaddr_in *) next->ifa_netmask)->sin_addr.s_addr;
+                    prefix_len = CountBytes(netmask);
+                    break;
+                }
+                case AF_INET6: {
+                    addr = Address::Create(next->ifa_addr);
+                    in6_addr &netmask = ((sockaddr_in6 *) next->ifa_netmask)->sin6_addr;
+                    prefix_len = 0;
+                    for (int i = 0; i < 16; ++i) {
+                        prefix_len += CountBytes(netmask.s6_addr[i]);
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+            if (addr)
+                result.insert(std::make_pair(next->ifa_name, std::make_pair(addr, prefix_len)));
+        }
+    } catch (...) {
+        debug("Address::GetInterfaceAddresses exception");
+        freeifaddrs(res);
+        return false;
+    }
+    freeifaddrs(res);
+    return !result.empty();
 }
 
 bool Address::GetInterfaceAddresses(std::vector<std::pair<Address::ptr, uint32_t>> &result, const std::string &iface,
                                     int family) {
+    //如果传入的 iface 参数为空或者为 "*"，则表示获取本机
+    if (iface.empty() || iface == "*") {
+        if (family == AF_INET || family == AF_UNSPEC) {
+            result.emplace_back(Address::ptr(new IPv4Address()), 0u);
+        }
+        if (family == AF_INET6 || family == AF_UNSPEC) {
+            result.emplace_back(Address::ptr(new IPv6Address()), 0u);
+        }
+        return true;
+    }
+    std::multimap<std::string, std::pair<Address::ptr, uint32_t> > results;
+    if (!GetInterfaceAddresses(results, family))
+        return false;
 
+    auto its = results.equal_range(iface);
+    for (; its.first != its.second; ++its.first) {
+        result.push_back(its.first->second);
+    }
+    return !result.empty();
 }
 
 IPAddress::ptr IPAddress::Create(const std::string &address, uint16_t port) {
@@ -147,7 +266,7 @@ IPAddress::ptr IPAddress::Create(const std::string &address, uint16_t port) {
     }
 
     try {
-        IPAddress::ptr result = std::dynamic_pointer_cast<IPAddress>(Address::Create(res->ai_addr, res->ai_addrlen));
+        IPAddress::ptr result = std::dynamic_pointer_cast<IPAddress>(Address::Create(res->ai_addr));
         if (result)
             result->setPort(port);
         freeaddrinfo(res);
@@ -268,7 +387,7 @@ std::ostream &IPv6Address::insert(std::ostream &os) const {
         error("IPv6Address::insert inet_ntop error");
         return os;
     }
-    os << "[" << buff << "]:" << ntohs(m_addr.sin6_port);;
+    os << "[" << buff << "]:" << ntohs(m_addr.sin6_port);
     return os;
 }
 
