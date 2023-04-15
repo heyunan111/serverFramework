@@ -102,7 +102,7 @@ public:
     /**
      * @brief 获取发送超时时间(毫秒)
      */
-    int64_t getSendTimeout() const;
+    [[nodiscard]] int64_t getSendTimeout() const;
 
     /**
      * @brief 设置发送超时时间(毫秒)
@@ -112,7 +112,7 @@ public:
     /**
      * @brief 获取接受超时时间(毫秒)
      */
-    int64_t getRecvTimeout() const;
+    [[nodiscard]] int64_t getRecvTimeout() const;
 
     /**
      * @brief 设置接受超时时间(毫秒)
@@ -158,14 +158,14 @@ public:
      * @param[in] addr 地址
      * @return 是否绑定成功
      */
-    virtual bool bind(Address::ptr addr);
+    virtual bool bind(const Address::ptr &addr);
 
     /**
      * @brief 连接地址
      * @param[in] addr 目标地址
      * @param[in] timeout_ms 超时时间(毫秒)
      */
-    virtual bool connect(const Address::ptr addr, uint64_t timeout_ms = -1);
+    virtual bool connect(const Address::ptr &addr, uint64_t timeout_ms = -1);
 
     virtual bool reconnect(uint64_t timeout_ms = -1);
 
@@ -217,7 +217,7 @@ public:
      *      @retval =0 socket被关闭
      *      @retval <0 socket出错
      */
-    virtual int sendTo(const void *buffer, size_t length, const Address::ptr to, int flags = 0);
+    virtual int sendTo(const void *buffer, size_t length, const Address::ptr &to, int flags = 0);
 
     /**
      * @brief 发送数据
@@ -230,7 +230,7 @@ public:
      *      @retval =0 socket被关闭
      *      @retval <0 socket出错
      */
-    virtual int sendTo(const iovec *buffers, size_t length, const Address::ptr to, int flags = 0);
+    virtual int sendTo(const iovec *buffers, size_t length, const Address::ptr &to, int flags = 0);
 
     /**
      * @brief 接受数据
@@ -267,7 +267,7 @@ public:
      *      @retval =0 socket被关闭
      *      @retval <0 socket出错
      */
-    virtual int recvFrom(void *buffer, size_t length, Address::ptr from, int flags = 0);
+    virtual int recvFrom(void *buffer, size_t length, const Address::ptr &from, int flags = 0);
 
     /**
      * @brief 接受数据
@@ -280,7 +280,7 @@ public:
      *      @retval =0 socket被关闭
      *      @retval <0 socket出错
      */
-    virtual int recvFrom(iovec *buffers, size_t length, Address::ptr from, int flags = 0);
+    virtual int recvFrom(iovec *buffers, size_t length, const Address::ptr &from, int flags = 0);
 
     /**
      * @brief 获取远端地址
@@ -327,7 +327,7 @@ public:
      */
     virtual std::ostream &dump(std::ostream &os) const;
 
-    virtual std::string toString() const;
+    [[nodiscard]] virtual std::string toString() const;
 
     /**
      * @brief 返回socket句柄

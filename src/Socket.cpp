@@ -12,7 +12,7 @@
 #include "FDManger.h"
 #include "Logger.h"
 #include "IOManager.h"
-
+#include "Hook.h"
 namespace hyn {
 Socket::ptr Socket::CreateTCP(const Address::ptr &address) {
     Socket::ptr socket1(new Socket(address->getFamily(), static_cast<int>(Type::TCP), 0));
@@ -118,56 +118,167 @@ Socket::ptr Socket::accept() {
 
 }
 
-bool Socket::bind(Address::ptr addr) {
-    return false;
+bool Socket::bind(const Address::ptr &addr) {
+    //首先检查Socket对象是否合法，若不合法则调用newSock方法创建新的Socket
+    if (!isValid()) {
+        newSock();
+        if (!isValid())
+            return false;
+    }
+
+    // 然后检查传入的Address对象与当前Socket对象的地址族是否一致，若不一致则返回false。
+    if (addr->getFamily() != m_family) {
+        error("bind socket family:%d != addr family:%d", m_family, addr->getFamily());
+        return false;
+    }
+
+    ///FIXME :Unix
+
+    // 如果调用bind函数失败，则返回false，否则调用getLocalAddress方法获取本地地址，返回true。
+    if (::bind(m_sock, addr->getAddr(), addr->getAddrLen())) {
+        error("bind error errnp = %d,errstr = %s", errno, strerror(errno));
+        return false;
+    }
+    getLocalAddress();
+    return true;
 }
 
-bool Socket::connect(const Address::ptr addr, uint64_t timeout_ms) {
-    return false;
+bool Socket::connect(const Address::ptr &addr, uint64_t timeout_ms) {
+    //函数首先检查套接字是否有效，然后检查要连接的地址的协议族是否与套接字的协议族匹配。
+    if (!isValid()) {
+        newSock();
+        if (!isValid())
+            return false;
+    }
+    if (addr->getFamily() != m_family) {
+        error("bind socket family:%d != addr family:%d", m_family, addr->getFamily());
+        return false;
+    }
+
+    // 如果连接的超时时间为-1，那么就使用普通的connect函数连接地址，
+    if (timeout_ms == static_cast<uint64_t>(-1)) {
+        if (::connect(m_sock, addr->getAddr(), addr->getAddrLen())) {
+            error("connect error sock:%d,connect:%s,errno:%d,strerr:%s", m_sock, addr->toString().c_str(), errno,
+                  strerror(errno));
+            close();
+            return false;
+        }
+    } else {    // 否则使用自定义的connect_with_timeout函数，它会在超时时间内等待连接成功。
+        if (connect_with_timeout(m_sock, addr->getAddr(), addr->getAddrLen(), timeout_ms)) {
+            error("connect error sock:%d,connect:%s,errno:%d,strerr:%s", m_sock, addr->toString().c_str(), errno,
+                  strerror(errno));
+            close();
+            return false;
+        }
+    }
+
+    // 将isConnected标记为true，同时调用getRemoteAddress和getLocalAddress函数获取远程地址和本地地址。
+    m_isConnected = true;
+    getRemoteAddress();
+    getLocalAddress();
+    return true;
 }
 
 bool Socket::reconnect(uint64_t timeout_ms) {
-    return false;
+    //如果 m_remoteAddress 为空，函数将记录错误并返回 false。
+    if (!m_remoteAddress) {
+        error("reconnect m_remoteAddress is nullptr");
+        return false;
+    }
+
+    //否则，函数将调用 connect() 函数来建立连接。在调用 connect() 函数之前，它会将 m_localAddress 重置为 nullptr。
+    m_localAddress.reset();
+    return connect(m_remoteAddress, timeout_ms);
 }
 
 bool Socket::listen(int backlog) {
-    return false;
+    if (!isValid()) {
+        error("listen error socket = -1");
+        return false;
+    }
+    if (::listen(m_sock, backlog)) {
+        error("listen error errno:%d,errstr:%s", errno, strerror(errno));
+        return false;
+    }
+    return true;
 }
 
 bool Socket::close() {
-    return false;
+    if (!m_isConnected && m_sock == -1)
+        return false;
+    m_isConnected = false;
+    if (m_sock != -1) {
+        ::close(m_sock);
+        m_sock == -1;
+    }
+    return true;
 }
 
 int Socket::send(const void *buffer, size_t length, int flags) {
-    return 0;
+    if (isConnected())
+        return static_cast<int>(::send(m_sock, buffer, length, flags));
+    return -1;
 }
 
 int Socket::send(const iovec *buffers, size_t length, int flags) {
-    return 0;
+    if (!isConnected())
+        return -1;
+    msghdr msg{};
+    msg.msg_iov = (iovec *) buffers;
+    msg.msg_iovlen = length;
+    return static_cast<int>(sendmsg(m_sock, &msg, flags));
 }
 
-int Socket::sendTo(const void *buffer, size_t length, const Address::ptr to, int flags) {
-    return 0;
+int Socket::sendTo(const void *buffer, size_t length, const Address::ptr &to, int flags) {
+    if (isConnected())
+        return static_cast<int>(::sendto(m_sock, buffer, length, flags, to->getAddr(), to->getAddrLen()));
+    return -1;
 }
 
-int Socket::sendTo(const iovec *buffers, size_t length, const Address::ptr to, int flags) {
-    return 0;
+int Socket::sendTo(const iovec *buffers, size_t length, const Address::ptr &to, int flags) {
+    if (!isConnected())
+        return -1;
+    msghdr msg{};
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_iov = (iovec *) buffers;
+    msg.msg_iovlen = length;
+    msg.msg_name = to->getAddr();
+    msg.msg_namelen = to->getAddrLen();
+    return static_cast<int>(::sendmsg(m_sock, &msg, flags));
 }
 
 int Socket::recv(void *buffer, size_t length, int flags) {
-    return 0;
+    if (isConnected())
+        return static_cast<int>(::recv(m_sock, buffer, length, flags));
+    return -1;
 }
 
 int Socket::recv(iovec *buffers, size_t length, int flags) {
-    return 0;
+    if (!isConnected())
+        return -1;
+    msghdr msg{};
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_iov = buffers;
+    msg.msg_iovlen = length;
+    return static_cast<int>(::recvmsg(m_sock, &msg, flags));
 }
 
-int Socket::recvFrom(void *buffer, size_t length, Address::ptr from, int flags) {
-    return 0;
+int Socket::recvFrom(void *buffer, size_t length, const Address::ptr &from, int flags) {
+    if (!isConnected())
+        return -1;
+    auto len = from->getAddrLen();
+    return static_cast<int>(::recvfrom(m_sock, buffer, length, flags, from->getAddr(), &len));
 }
 
-int Socket::recvFrom(iovec *buffers, size_t length, Address::ptr from, int flags) {
-    return 0;
+int Socket::recvFrom(iovec *buffers, size_t length, const Address::ptr &from, int flags) {
+    if (!isConnected())
+        return -1;
+    msghdr msg{};
+    msg.msg_iov = buffers;
+    msg.msg_iovlen = length;
+    msg.msg_name = from->getAddr();
+    msg.msg_namelen = from->getAddrLen();
+    return static_cast<int>(::recvmsg(m_sock, &msg, flags));
 }
 
 Address::ptr Socket::getRemoteAddress() {

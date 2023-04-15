@@ -25,10 +25,11 @@ bool is_hook_enable();
 
 void set_hook_enable(bool f);
 
+
 } // hyn
 
 extern "C" {
-
+int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen, uint64_t timout_ms);
 //sleep
 typedef unsigned int (*sleep_fun)(unsigned int seconds);
 extern sleep_fun sleep_f;
