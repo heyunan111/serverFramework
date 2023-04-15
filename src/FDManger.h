@@ -33,22 +33,55 @@ public:
 
     explicit FdCtx(int fd);
 
+    /**
+     * @brief 是否初始化完成
+     */
     bool is_init() const { return m_isInit; }
 
+    /**
+     * @brief 是否socket
+     */
     bool is_socket() const { return m_isSocket; }
 
+    /**
+    * @brief 是否已关闭
+    */
     bool is_close() const { return m_isClose; }
 
+    /**
+    * @brief 获取系统非阻塞
+    */
     bool is_sys_nonblock() const;
 
+    /**
+     * @brief 设置系统非阻塞
+     * @param[in] mIsSysNonblock 是否阻塞
+     */
     void set_is_sys_nonblock(bool mIsSysNonblock);
 
+    /**
+     * @brief 获取是否用户主动设置的非阻塞
+     */
     bool is_usr_nonblock() const;
 
+    /**
+     * @brief 设置用户主动设置非阻塞
+     * @param[in] mIsUsrNonblock 是否阻塞
+     */
     void set_is_usr_nonblock(bool mIsUsrNonblock);
 
+    /**
+    * @brief 设置超时时间
+    * @param[in] type 类型SO_RCVTIMEO(读超时), SO_SNDTIMEO(写超时)
+    * @param[in] v 时间毫秒
+    */
     void set_time(int type, uint64_t time);
 
+    /**
+    * @brief 获取超时时间
+    * @param[in] type 类型SO_RCVTIMEO(读超时), SO_SNDTIMEO(写超时)
+    * @return 超时时间毫秒
+    */
     uint64_t get_time(int type) const;
 
 private:

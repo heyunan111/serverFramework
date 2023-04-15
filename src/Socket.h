@@ -48,23 +48,23 @@ public:
      *@brief 创建TPC Socket（满足地址类型）
      *@param address 地址
      */
-    static Socket::ptr CreateTCP(Address::ptr address);
+    static Socket::ptr CreateTCP(const Address::ptr &address);
 
     /**
      *@brief 创建UDP Socket满足地址类型
      *@param address 地址
      */
-    static Socket::ptr CreateUDP(Address::ptr address);
+    static Socket::ptr CreateUDP(const Address::ptr &address);
 
     /**
     * @brief 创建IPv4的TCP Socket
     */
-    static Socket::ptr CreateTCPSocket();
+    static Socket::ptr CreateTCPSocket4();
 
     /**
      * @brief 创建IPv4的UDP Socket
      */
-    static Socket::ptr CreateUDPSocket();
+    static Socket::ptr CreateUDPSocket4();
 
     /**
      * @brief 创建IPv6的TCP Socket
@@ -92,17 +92,17 @@ public:
      * @param[in] type 类型
      * @param[in] protocol 协议
      */
-    Socket(int family, int type, int protocol = 0);
+    Socket(int family, int type, int protocol = 0) : m_family(family), m_type(type), m_protocol(protocol) {}
 
     /**
      * @brief 析构函数
      */
-    virtual ~Socket();
+    virtual ~Socket() { close(); }
 
     /**
      * @brief 获取发送超时时间(毫秒)
      */
-    int64_t getSendTimeout();
+    int64_t getSendTimeout() const;
 
     /**
      * @brief 设置发送超时时间(毫秒)
@@ -315,7 +315,7 @@ public:
     /**
      * @brief 是否有效(m_sock != -1)
      */
-    bool isValid() const;
+    [[nodiscard]] bool isValid() const;
 
     /**
      * @brief 返回Socket错误
@@ -372,7 +372,7 @@ protected:
 
 protected:
     /// socket句柄
-    int m_sock;
+    int m_sock{-1};
     /// 协议簇
     int m_family;
     /// 类型
@@ -380,7 +380,7 @@ protected:
     /// 协议
     int m_protocol;
     /// 是否连接
-    bool m_isConnected;
+    bool m_isConnected{false};
     /// 本地地址
     Address::ptr m_localAddress;
     /// 远端地址
