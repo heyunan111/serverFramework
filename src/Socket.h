@@ -16,7 +16,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <boost/noncopyable.hpp>
-#include "address.h"
+#include "Address.h"
 
 namespace hyn {
 

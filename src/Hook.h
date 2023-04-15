@@ -11,6 +11,7 @@
 
 #include <dlfcn.h>
 #include <string>
+#include <cstring>
 #include <sys/uio.h>
 #include <sys/ioctl.h>
 #include <cstdarg>

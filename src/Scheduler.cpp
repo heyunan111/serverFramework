@@ -67,7 +67,7 @@ void Scheduler::start() {
 }
 
 void Scheduler::stop() {
-    debug("scheduler stop");
+   // debug("scheduler stop");
     m_auto_stop = true;
     if (m_root_fiber && m_thread_count == 0 &&
         (m_root_fiber->get_state() == fiber::Fiber::TERM || m_root_fiber->get_state() == fiber::Fiber::INIT)) {

@@ -66,7 +66,7 @@ hyn::fiber::Fiber::Fiber() {
     }
     ++s_fiber_count;
 
-    debug("Fiber::Fiber main");
+    //debug("Fiber::Fiber main");
 }
 
 /**
@@ -104,7 +104,7 @@ hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_ca
         makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
     }
 
-    debug("Fiber::Fiber id : %d", m_id);
+    //debug("Fiber::Fiber id : %d", m_id);
 }
 
 hyn::fiber::Fiber::~Fiber() {
@@ -120,7 +120,7 @@ hyn::fiber::Fiber::~Fiber() {
             SetThis(nullptr);
         }
     }
-    debug("Fiber:~Fiber id:%d", m_id);
+    //debug("Fiber:~Fiber id:%d", m_id);
     //std::cout << "Fiber:~Fiber id:" << m_id << '\n';
 }
 
