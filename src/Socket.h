@@ -112,7 +112,7 @@ public:
     /**
      * @brief 获取接受超时时间(毫秒)
      */
-    int64_t getRecvTimeout();
+    int64_t getRecvTimeout() const;
 
     /**
      * @brief 设置接受超时时间(毫秒)

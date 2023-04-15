@@ -11,6 +11,7 @@
 #include "Socket.h"
 #include "FDManger.h"
 #include "Logger.h"
+#include "IOManager.h"
 
 namespace hyn {
 Socket::ptr Socket::CreateTCP(const Address::ptr &address) {
@@ -74,7 +75,7 @@ void Socket::setSendTimeout(int64_t v) {
     setOption(SOL_SOCKET, SO_SNDTIMEO, tv);
 }
 
-int64_t Socket::getRecvTimeout() {
+int64_t Socket::getRecvTimeout() const {
     FdCtx::ptr ctx = FdMgr::GetInstance()->get(m_sock);
     if (ctx)
         return static_cast<int64_t>(ctx->get_time(SO_RCVTIMEO));
@@ -105,7 +106,16 @@ bool Socket::setOption(int level, int option, const void *result, socklen_t len)
 }
 
 Socket::ptr Socket::accept() {
-    return hyn::Socket::ptr();
+    Socket::ptr sock(new Socket(m_family, m_type, m_protocol));
+    int newsock = ::accept(m_sock, nullptr, nullptr);
+    if (newsock == -1) {
+        error("accept(socket:%d) error,errno = %d,errstr = %s", m_sock, errno, strerror(errno));
+        return nullptr;
+    }
+    if (sock->init(newsock))
+        return sock;
+    return nullptr;
+
 }
 
 bool Socket::bind(Address::ptr addr) {
@@ -161,54 +171,147 @@ int Socket::recvFrom(iovec *buffers, size_t length, Address::ptr from, int flags
 }
 
 Address::ptr Socket::getRemoteAddress() {
-    return hyn::Address::ptr();
+    if (m_remoteAddress)
+        return m_remoteAddress;
+    Address::ptr res;
+    switch (m_family) {
+        case AF_INET: {
+            res.reset(new IPv4Address());
+            break;
+        }
+        case AF_INET6: {
+            res.reset(new IPv6Address());
+            break;
+        }
+        case AF_UNIX: {
+            res.reset(new UnixAddress());
+            break;
+        }
+        default:
+            res.reset(new UnknowAddress(m_family));
+            break;
+    }
+    socklen_t addrlen = res->getAddrLen();
+    if (getpeername(m_sock, res->getAddr(), &addrlen)) {
+        error("getpeername error sock:%d,errno:%d,strerror:%s", m_sock, errno, strerror(errno));
+        return Address::ptr(new UnknowAddress(m_family));
+    }
+    if (m_family == AF_UNIX) {
+        UnixAddress::ptr addr = std::dynamic_pointer_cast<UnixAddress>(res);
+        addr->setAddrLen(addrlen);
+    }
+    m_remoteAddress = res;
+    return m_remoteAddress;
 }
 
 Address::ptr Socket::getLocalAddress() {
-    return hyn::Address::ptr();
+    if (m_localAddress)
+        return m_localAddress;
+    Address::ptr res;
+    switch (m_family) {
+        case AF_INET: {
+            res.reset(new IPv4Address());
+            break;
+        }
+        case AF_INET6: {
+            res.reset(new IPv6Address());
+            break;
+        }
+        case AF_UNIX: {
+            res.reset(new UnixAddress());
+            break;
+        }
+        default:
+            res.reset(new UnknowAddress(m_family));
+            break;
+    }
+    socklen_t addrlen = res->getAddrLen();
+    if (getsockname(m_sock, res->getAddr(), &addrlen)) {
+        error("getsockname error sock:%d,errno:%d,strerror:%s", m_sock, errno, strerror(errno));
+        return Address::ptr(new UnknowAddress(m_family));
+    }
+    if (m_family == AF_UNIX) {
+        UnixAddress::ptr addr = std::dynamic_pointer_cast<UnixAddress>(res);
+        addr->setAddrLen(addrlen);
+    }
+    m_localAddress = res;
+    return m_localAddress;
 }
 
 bool Socket::isValid() const {
-    return false;
+    return m_sock != -1;
 }
 
 int Socket::getError() {
-    return 0;
+    int error = 0;
+    socklen_t len = sizeof(error);
+    if (!getOption(SOL_SOCKET, SO_ERROR, &error, &len)) {
+        error = errno;
+    }
+    return error;
 }
 
 std::ostream &Socket::dump(std::ostream &os) const {
-
+    os << "[Socket sock = " << m_sock << " m_isConnected = " << m_isConnected << " m_family = " << m_family
+       << " type = " << m_type << " m_protocol = " << m_protocol;
+    if (m_localAddress)
+        os << " LocalAddress = " << m_localAddress->toString();
+    if (m_remoteAddress)
+        os << " RemoteAddress = " << m_remoteAddress->toString();
+    os << "]";
+    return os;
 }
 
 std::string Socket::toString() const {
-    return std::string();
+    std::stringstream ss;
+    dump(ss);
+    return ss.str();
 }
 
 bool Socket::cancelRead() {
-    return false;
+    return iomanager::IOManager::GetThis()->cancelEvent(m_sock, iomanager::IOManager::READ);
 }
 
 bool Socket::cancelWrite() {
-    return false;
+    return iomanager::IOManager::GetThis()->cancelEvent(m_sock, iomanager::IOManager::WRITE);
 }
 
 bool Socket::cancelAccept() {
-    return false;
+    return iomanager::IOManager::GetThis()->cancelEvent(m_sock, iomanager::IOManager::READ);
 }
 
 bool Socket::cancelAll() {
-    return false;
+    return iomanager::IOManager::GetThis()->cancelAll(m_sock);
 }
 
 void Socket::initSock() {
-
+    int val = 1;
+    setOption(SOL_SOCKET, SO_REUSEADDR, val);
+    if (m_type == SOCK_STREAM) {
+        setOption(IPPROTO_TCP, TCP_NODELAY, val);
+    }
 }
 
 void Socket::newSock() {
-
+    m_sock = socket(m_family, m_type, m_protocol);
+    if (m_sock != -1) {
+        initSock();
+    } else {
+        error("socket(family:%d,type:%d,protocol%d)errno = %d,errstr = %s", m_family, m_type, m_protocol, errno,
+              strerror(errno));
+    }
 }
 
 bool Socket::init(int sock) {
+    FdCtx::ptr ctx = FdMgr::GetInstance()->get(sock);
+    if (ctx && ctx->is_socket() && !ctx->is_close()) {
+        m_sock = sock;
+        m_isConnected = true;
+        initSock();
+        getRemoteAddress();
+        getLocalAddress();
+        return true;
+    }
     return false;
 }
 } // hyn

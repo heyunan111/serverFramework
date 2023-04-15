@@ -32,7 +32,7 @@ class IPAddress;
  */
 class Address {
 public:
-    typedef std::shared_ptr<Address> ptr;
+    using ptr = std::shared_ptr<Address>;
 
     /**
      *@brief虚析构函数
@@ -147,7 +147,7 @@ public:
 
 class IPAddress : public Address {
 public:
-    typedef std::shared_ptr<IPAddress> ptr;
+    using ptr = std::shared_ptr<IPAddress>;
 
     /**
      * @brief 通过域名,IP,服务器名创建IPAddress
@@ -191,7 +191,7 @@ public:
 
 class IPv4Address : public IPAddress {
 public:
-    std::shared_ptr<IPv4Address> ptr;
+    using ptr = std::shared_ptr<IPv4Address>;
 
     /**
     * @brief 通过sockaddr_in构造IPv4Address
@@ -230,7 +230,7 @@ private:
 
 class IPv6Address : public IPAddress {
 public:
-    std::shared_ptr<IPv6Address> ptr;
+    using ptr = std::shared_ptr<IPv6Address>;
 
     IPv6Address();
 
@@ -272,7 +272,7 @@ private:
 
 class UnixAddress : public Address {
 public:
-    std::shared_ptr<UnixAddress> ptr;
+    using ptr = std::shared_ptr<UnixAddress>;
 
     UnixAddress();
 
@@ -301,7 +301,7 @@ private:
 
 class UnknowAddress : public Address {
 public:
-    std::shared_ptr<UnknowAddress> ptr;
+    using ptr = std::shared_ptr<UnknowAddress>;
 
     explicit UnknowAddress(int family);
 
