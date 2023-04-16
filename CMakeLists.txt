@@ -17,7 +17,7 @@ add_executable(serverFramework main.cpp src/_Singleton.h src/Address.cpp src/Add
         test/test_fiber.h test/test_hook.h test/test_iomanager.h test/test_scheduler.h test/thread_test.h test/util_test.h
         test/test_address.h test/test_Socket.h
 
-        hyn.h main.cpp)
+        hyn.h main.cpp src/Bytearray.cpp src/ByteArray.h)
 
 target_link_libraries(serverFramework ${SOURCE_FILES})
 target_link_libraries(serverFramework PRIVATE OpenSSL::SSL OpenSSL::Crypto)
