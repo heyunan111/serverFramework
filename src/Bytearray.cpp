@@ -12,6 +12,7 @@
 #include "Logger.h"
 #include "ByteArray.h"
 #include <cstring>
+#include <iomanip>
 
 namespace hyn {
 ByteArray::Node::Node(size_t s) : ptr(new char[s]), size(0) {
@@ -209,23 +210,117 @@ void ByteArray::setIsLittleEndian(bool is) {
 }
 
 std::string ByteArray::toString() const {
-    return std::string();
+    std::string str;
+    str.resize(getReadSize());
+    if (str.empty())
+        return str;
+    read(&str[0], str.size(), m_pos);
+    return str;
 }
+
 
 std::string ByteArray::toHexString() const {
-    return std::string();
+    std::string str = toString();
+    std::stringstream ss;
+
+    for (size_t i = 0; i < str.size(); ++i) {
+        if (i > 0 && i % 32 == 0) {
+            ss << std::endl;
+        }
+        ss << std::setw(2) << std::setfill('0') << std::hex
+           << (int) (uint8_t) str[i] << " ";
+    }
+
+    return ss.str();
 }
 
+
 uint64_t ByteArray::getReadBuffers(std::vector<iovec> &buffers, uint64_t len) const {
-    return 0;
+    len = len > getReadSize() ? getReadSize() : len;
+    if (len <= 0)
+        return 0;
+    uint64_t size = len;
+    size_t npos = m_pos % m_baseSize, ncap = m_cur->size - npos;
+    iovec iov{};
+    Node *cur = m_cur;
+    while (size > 0) {
+        if (ncap >= size) {
+            iov.iov_base = cur->ptr + npos;
+            iov.iov_len = size;
+            size = 0;
+        } else {
+            iov.iov_base = cur->ptr + npos;
+            iov.iov_len = ncap;
+            size -= ncap;
+            cur = cur->next;
+            ncap = cur->size;
+            npos = 0;
+        }
+        buffers.push_back(iov);
+    }
+    return len;
 }
 
 uint64_t ByteArray::getReadBuffers(std::vector<iovec> &buffers, uint64_t len, uint64_t position) const {
-    return 0;
+    len = len > getReadSize() ? getReadSize() : len;
+    if (len <= 0)
+        return 0;
+    uint64_t size = len;
+    size_t npos = position % m_baseSize;
+    size_t count = position / m_baseSize;
+    Node *cur = m_cur;
+    while (count > 0) {
+        cur = cur->next;
+        --count;
+    }
+    size_t ncap = cur->size - npos;
+    iovec iov{};
+    while (size > 0) {
+        if (ncap >= size) {
+            iov.iov_base = cur->ptr + npos;
+            iov.iov_len = size;
+            size = 0;
+        } else {
+            iov.iov_base = cur->ptr + npos;
+            iov.iov_len = ncap;
+            size -= ncap;
+            cur = cur->next;
+            ncap = cur->size;
+            npos = 0;
+        }
+        buffers.push_back(iov);
+    }
+    return len;
 }
 
 uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
-    return 0;
+    if (len == 0) {
+        return 0;
+    }
+    addCapacity(len);
+    uint64_t size = len;
+
+    size_t npos = m_pos % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    iovec iov{};
+    Node *cur = m_cur;
+    while (len > 0) {
+        if (ncap >= len) {
+            iov.iov_base = cur->ptr + npos;
+            iov.iov_len = len;
+            len = 0;
+        } else {
+            iov.iov_base = cur->ptr + npos;
+            iov.iov_len = ncap;
+
+            len -= ncap;
+            cur = cur->next;
+            ncap = cur->size;
+            npos = 0;
+        }
+        buffers.push_back(iov);
+    }
+    return size;
 }
 
 
