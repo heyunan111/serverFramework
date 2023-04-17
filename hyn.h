@@ -17,6 +17,7 @@
 #include "src/FDManger.h"
 #include "src/fiber.h"
 #include "src/Hook.h"
+#include "src/Http.h"
 #include "src/Logger.h"
 #include "src/iniFile.h"
 #include "src/IOManager.h"
