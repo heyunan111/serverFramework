@@ -323,7 +323,7 @@ uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
     return size;
 }
 
-uint32_t ByteArray::EncodeZigzag32(const uint32_t &value) {
+uint32_t ByteArray::EncodeZigzag32(const int32_t &value) {
     if (value < 0) {
         return (static_cast<uint32_t>(-value)) * 2 - 1;
     } else {
@@ -331,7 +331,7 @@ uint32_t ByteArray::EncodeZigzag32(const uint32_t &value) {
     }
 }
 
-uint64_t ByteArray::EncodeZigzag64(const uint64_t &value) {
+uint64_t ByteArray::EncodeZigzag64(const int64_t &value) {
     if (value < 0) {
         return (static_cast<uint64_t>(-value)) * 2 - 1;
     } else {
@@ -339,11 +339,11 @@ uint64_t ByteArray::EncodeZigzag64(const uint64_t &value) {
     }
 }
 
-int32_t ByteArray::DecodeZigzag32(int32_t value) {
+int32_t ByteArray::DecodeZigzag32(uint32_t value) {
     return (value >> 1) ^ (-(value & 1));
 }
 
-int64_t ByteArray::DecodeZigzag64(int64_t value) {
+int64_t ByteArray::DecodeZigzag64(uint64_t value) {
     return (value >> 1) ^ (-(value & 1));
 }
 
@@ -412,5 +412,86 @@ void ByteArray::writeStringVint(const std::string &value) {
 void ByteArray::writeStringWithoutLength(const std::string &value) {
     write(value.c_str(), value.size());
 }
+
+int32_t ByteArray::readInt32() {
+    return DecodeZigzag32(readUint32());
+}
+
+uint32_t ByteArray::readUint32() {
+    uint32_t res = 0;
+    for (int i = 0; i < 32; ++i) {
+        uint8_t bytes = readFixation<uint8_t>();
+        if (bytes < 0x80) {
+            res |= static_cast<uint32_t>(bytes) << 1;
+        } else {
+            res |= static_cast<uint32_t>(bytes & 0x7f) << 1;
+        }
+    }
+    return res;
+}
+
+int64_t ByteArray::readInt64() {
+    return DecodeZigzag64(readUint64());
+}
+
+uint64_t ByteArray::readUint64() {
+    uint64_t res = 0;
+    for (int i = 0; i < 64; ++i) {
+        uint8_t bytes = readFixation<uint8_t>();
+        if (bytes < 0x80) {
+            res |= static_cast<uint64_t>(bytes) << 1;
+        } else {
+            res |= static_cast<uint64_t>(bytes & 0x7f) << 1;
+        }
+    }
+    return res;
+}
+
+float ByteArray::readFloat() {
+    auto v = readFixation<uint32_t>();
+    float value;
+    memcpy(&value, &v, sizeof(v));
+    return value;
+}
+
+double ByteArray::readDouble() {
+    auto v = readFixation<uint64_t>();
+    double value;
+    memcpy(&value, &v, sizeof(v));
+    return value;
+}
+
+std::string ByteArray::readStringF16() {
+    auto len = readFixation<uint16_t>();
+    std::string buff;
+    buff.resize(len);
+    read(&buff[0], len);
+    return buff;
+}
+
+std::string ByteArray::readStringF32() {
+    auto len = readFixation<uint32_t>();
+    std::string buff;
+    buff.resize(len);
+    read(&buff[0], len);
+    return buff;
+}
+
+std::string ByteArray::readStringF64() {
+    auto len = readFixation<uint64_t>();
+    std::string buff;
+    buff.resize(len);
+    read(&buff[0], len);
+    return buff;
+}
+
+std::string ByteArray::readStringVint() {
+    auto len = readFixation<uint64_t>();
+    std::string buff;
+    buff.resize(len);
+    read(&buff[0], len);
+    return buff;
+}
+
 
 } // hyn

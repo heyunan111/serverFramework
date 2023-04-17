@@ -62,7 +62,7 @@ class ByteArray {
 
     /**
      *@brief 写入固定长度的数据（大端/小端）
-     *@note int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t,
+     *@note int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t
      */
     template<typename T>
     void writeFixation(T value);
@@ -101,7 +101,6 @@ class ByteArray {
      */
     void writeDouble(double value);
 
-
     /**
      * @brief 写入std::string类型的数据,用uint16_t作为长度类型
      */
@@ -126,6 +125,94 @@ class ByteArray {
      * @brief 写入std::string类型的数据,无长度
      */
     void writeStringWithoutLength(const std::string &value);
+
+    /**
+     *@brief 读取T类型的数据
+     *@pre getReadSize >= sizeof(T)
+     *@note int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t
+     */
+    template<typename T>
+    T readFixation();
+
+    /**
+    * @brief 读取有符号Varint32类型的数据
+    * @pre getReadSize() >= 有符号Varint32实际占用内存
+    * @post m_position += 有符号Varint32实际占用内存
+    * @exception 如果getReadSize() < 有符号Varint32实际占用内存 抛出 std::out_of_range
+    */
+    int32_t readInt32();
+
+    /**
+     * @brief 读取无符号Varint32类型的数据
+     * @pre getReadSize() >= 无符号Varint32实际占用内存
+     * @post m_position += 无符号Varint32实际占用内存
+     * @exception 如果getReadSize() < 无符号Varint32实际占用内存 抛出 std::out_of_range
+     */
+    uint32_t readUint32();
+
+    /**
+     * @brief 读取有符号Varint64类型的数据
+     * @pre getReadSize() >= 有符号Varint64实际占用内存
+     * @post m_position += 有符号Varint64实际占用内存
+     * @exception 如果getReadSize() < 有符号Varint64实际占用内存 抛出 std::out_of_range
+     */
+    int64_t readInt64();
+
+    /**
+     * @brief 读取无符号Varint64类型的数据
+     * @pre getReadSize() >= 无符号Varint64实际占用内存
+     * @post m_position += 无符号Varint64实际占用内存
+     * @exception 如果getReadSize() < 无符号Varint64实际占用内存 抛出 std::out_of_range
+     */
+    uint64_t readUint64();
+
+    /**
+     * @brief 读取float类型的数据
+     * @pre getReadSize() >= sizeof(float)
+     * @post m_position += sizeof(float);
+     * @exception 如果getReadSize() < sizeof(float) 抛出 std::out_of_range
+     */
+    float readFloat();
+
+    /**
+     * @brief 读取double类型的数据
+     * @pre getReadSize() >= sizeof(double)
+     * @post m_position += sizeof(double);
+     * @exception 如果getReadSize() < sizeof(double) 抛出 std::out_of_range
+     */
+    double readDouble();
+
+    /**
+     * @brief 读取std::string类型的数据,用uint16_t作为长度
+     * @pre getReadSize() >= sizeof(uint16_t) + size
+     * @post m_position += sizeof(uint16_t) + size;
+     * @exception 如果getReadSize() < sizeof(uint16_t) + size 抛出 std::out_of_range
+     */
+    std::string readStringF16();
+
+    /**
+     * @brief 读取std::string类型的数据,用uint32_t作为长度
+     * @pre getReadSize() >= sizeof(uint32_t) + size
+     * @post m_position += sizeof(uint32_t) + size;
+     * @exception 如果getReadSize() < sizeof(uint32_t) + size 抛出 std::out_of_range
+     */
+    std::string readStringF32();
+
+    /**
+     * @brief 读取std::string类型的数据,用uint64_t作为长度
+     * @pre getReadSize() >= sizeof(uint64_t) + size
+     * @post m_position += sizeof(uint64_t) + size;
+     * @exception 如果getReadSize() < sizeof(uint64_t) + size 抛出 std::out_of_range
+     */
+    std::string readStringF64();
+
+    /**
+     * @brief 读取std::string类型的数据,用无符号Varint64作为长度
+     * @pre getReadSize() >= 无符号Varint64实际大小 + size
+     * @post m_position += 无符号Varint64实际大小 + size;
+     * @exception 如果getReadSize() < 无符号Varint64实际大小 + size 抛出 std::out_of_range
+     */
+    std::string readStringVint();
 
     /**
     *@brief 写入size长度的数据
@@ -253,22 +340,22 @@ private:
     /**
      *@brief 采用Zigzag编码将32位有符号整数编码为无符号整数
      */
-    static uint32_t EncodeZigzag32(const uint32_t &value);
+    static uint32_t EncodeZigzag32(const int32_t &value);
 
     /**
      *@brief 采用Zigzag编码将64位有符号整数编码为无符号整数
      */
-    static uint64_t EncodeZigzag64(const uint64_t &value);
+    static uint64_t EncodeZigzag64(const int64_t &value);
 
     /**
      *@brief 采用Zigzag编码解码32位有符号整数
      */
-    static int32_t DecodeZigzag32(int32_t value);
+    static int32_t DecodeZigzag32(uint32_t value);
 
     /**
     *@brief 采用Zigzag编码解码64位有符号整数
     */
-    static int64_t DecodeZigzag64(int64_t value);
+    static int64_t DecodeZigzag64(uint64_t value);
 
     /**
      *@brief 如果不能容纳size，则扩容ByteArray
@@ -308,15 +395,39 @@ void ByteArray::writeFixation(T value) {
 }
 
 template<>
-void ByteArray::writeFixation(uint8_t value) {
+void ByteArray::writeFixation<uint8_t>(uint8_t value) {
     write(&value, sizeof(value));
 }
 
 template<>
-void ByteArray::writeFixation(int8_t value) {
+void ByteArray::writeFixation<int8_t>(int8_t value) {
     write(&value, sizeof(value));
 }
 
+template<typename T>
+T ByteArray::readFixation() {
+    T v;
+    read(&v, sizeof(v));
+    if (m_endian == hyn_BYTE_ORDER) {
+        return v;
+    } else {
+        return byteswap(v);
+    }
+}
+
+template<>
+int8_t ByteArray::readFixation<int8_t>() {
+    int8_t v;
+    read(&v, sizeof(v));
+    return v;
+}
+
+template<>
+uint8_t ByteArray::readFixation<uint8_t>() {
+    uint8_t v;
+    read(&v, sizeof(v));
+    return v;
+}
 
 } // hyn
 
