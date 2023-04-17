@@ -24,6 +24,9 @@ namespace hyn {
  *@note 序列化
  */
 class ByteArray {
+public:
+    using ptr = std::shared_ptr<ByteArray>;
+
     /**
      *@brief Bytearray的存储节点
      */
@@ -60,12 +63,62 @@ class ByteArray {
 
     ~ByteArray();
 
+
     /**
-     *@brief 写入固定长度的数据（大端/小端）
-     *@note int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t
+        * @brief 写入固定长度int8_t类型的数据
+        * @post m_position += sizeof(value)
+        *       如果m_position > m_size 则 m_size = m_position
+        */
+    void writeFint8(int8_t value);
+
+    /**
+     * @brief 写入固定长度uint8_t类型的数据
+     * @post m_position += sizeof(value)
+     *       如果m_position > m_size 则 m_size = m_position
      */
-    template<typename T>
-    void writeFixation(T value);
+    void writeFuint8(uint8_t value);
+
+    /**
+     * @brief 写入固定长度int16_t类型的数据(大端/小端)
+     * @post m_position += sizeof(value)
+     *       如果m_position > m_size 则 m_size = m_position
+     */
+    void writeFint16(int16_t value);
+
+    /**
+     * @brief 写入固定长度uint16_t类型的数据(大端/小端)
+     * @post m_position += sizeof(value)
+     *       如果m_position > m_size 则 m_size = m_position
+     */
+    void writeFuint16(uint16_t value);
+
+    /**
+     * @brief 写入固定长度int32_t类型的数据(大端/小端)
+     * @post m_position += sizeof(value)
+     *       如果m_position > m_size 则 m_size = m_position
+     */
+    void writeFint32(int32_t value);
+
+    /**
+     * @brief 写入固定长度uint32_t类型的数据(大端/小端)
+     * @post m_position += sizeof(value)
+     *       如果m_position > m_size 则 m_size = m_position
+     */
+    void writeFuint32(uint32_t value);
+
+    /**
+     * @brief 写入固定长度int64_t类型的数据(大端/小端)
+     * @post m_position += sizeof(value)
+     *       如果m_position > m_size 则 m_size = m_position
+     */
+    void writeFint64(int64_t value);
+
+    /**
+     * @brief 写入固定长度uint64_t类型的数据(大端/小端)
+     * @post m_position += sizeof(value)
+     *       如果m_position > m_size 则 m_size = m_position
+     */
+    void writeFuint64(uint64_t value);
 
     /**
      * @brief 写入有符号Varint32类型的数据
@@ -126,13 +179,70 @@ class ByteArray {
      */
     void writeStringWithoutLength(const std::string &value);
 
+
     /**
-     *@brief 读取T类型的数据
-     *@pre getReadSize >= sizeof(T)
-     *@note int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t
+     * @brief 读取int8_t类型的数据
+     * @pre getReadSize() >= sizeof(int8_t)
+     * @post m_position += sizeof(int8_t);
+     * @exception 如果getReadSize() < sizeof(int8_t) 抛出 std::out_of_range
      */
-    template<typename T>
-    T readFixation();
+    int8_t readFint8();
+
+    /**
+     * @brief 读取uint8_t类型的数据
+     * @pre getReadSize() >= sizeof(uint8_t)
+     * @post m_position += sizeof(uint8_t);
+     * @exception 如果getReadSize() < sizeof(uint8_t) 抛出 std::out_of_range
+     */
+    uint8_t readFuint8();
+
+    /**
+     * @brief 读取int16_t类型的数据
+     * @pre getReadSize() >= sizeof(int16_t)
+     * @post m_position += sizeof(int16_t);
+     * @exception 如果getReadSize() < sizeof(int16_t) 抛出 std::out_of_range
+     */
+    int16_t readFint16();
+
+    /**
+     * @brief 读取uint16_t类型的数据
+     * @pre getReadSize() >= sizeof(uint16_t)
+     * @post m_position += sizeof(uint16_t);
+     * @exception 如果getReadSize() < sizeof(uint16_t) 抛出 std::out_of_range
+     */
+    uint16_t readFuint16();
+
+    /**
+     * @brief 读取int32_t类型的数据
+     * @pre getReadSize() >= sizeof(int32_t)
+     * @post m_position += sizeof(int32_t);
+     * @exception 如果getReadSize() < sizeof(int32_t) 抛出 std::out_of_range
+     */
+    int32_t readFint32();
+
+    /**
+     * @brief 读取uint32_t类型的数据
+     * @pre getReadSize() >= sizeof(uint32_t)
+     * @post m_position += sizeof(uint32_t);
+     * @exception 如果getReadSize() < sizeof(uint32_t) 抛出 std::out_of_range
+     */
+    uint32_t readFuint32();
+
+    /**
+     * @brief 读取int64_t类型的数据
+     * @pre getReadSize() >= sizeof(int64_t)
+     * @post m_position += sizeof(int64_t);
+     * @exception 如果getReadSize() < sizeof(int64_t) 抛出 std::out_of_range
+     */
+    int64_t readFint64();
+
+    /**
+     * @brief 读取uint64_t类型的数据
+     * @pre getReadSize() >= sizeof(uint64_t)
+     * @post m_position += sizeof(uint64_t);
+     * @exception 如果getReadSize() < sizeof(uint64_t) 抛出 std::out_of_range
+     */
+    uint64_t readFuint64();
 
     /**
     * @brief 读取有符号Varint32类型的数据
@@ -386,48 +496,6 @@ private:
 };
 
 
-template<typename T>
-void ByteArray::writeFixation(T value) {
-    if (m_endian != hyn_BYTE_ORDER) {
-        value = byteswap(value);
-    }
-    write(&value, sizeof(value));
-}
-
-template<>
-void ByteArray::writeFixation<uint8_t>(uint8_t value) {
-    write(&value, sizeof(value));
-}
-
-template<>
-void ByteArray::writeFixation<int8_t>(int8_t value) {
-    write(&value, sizeof(value));
-}
-
-template<typename T>
-T ByteArray::readFixation() {
-    T v;
-    read(&v, sizeof(v));
-    if (m_endian == hyn_BYTE_ORDER) {
-        return v;
-    } else {
-        return byteswap(v);
-    }
-}
-
-template<>
-int8_t ByteArray::readFixation<int8_t>() {
-    int8_t v;
-    read(&v, sizeof(v));
-    return v;
-}
-
-template<>
-uint8_t ByteArray::readFixation<uint8_t>() {
-    uint8_t v;
-    read(&v, sizeof(v));
-    return v;
-}
 
 } // hyn
 

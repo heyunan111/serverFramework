@@ -11,6 +11,7 @@
 
 #include "src/_Singleton.h"
 #include "src/Address.h"
+#include "src/ByteArray.h"
 #include "src/endian.h"
 #include "src/exceptdef.h"
 #include "src/FDManger.h"

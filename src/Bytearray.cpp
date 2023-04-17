@@ -15,6 +15,7 @@
 #include <iomanip>
 
 namespace hyn {
+
 ByteArray::Node::Node(size_t s) : ptr(new char[s]), size(0) {
 }
 
@@ -35,6 +36,56 @@ ByteArray::~ByteArray() {
         temp = temp->next;
         delete m_cur;
     }
+}
+
+void ByteArray::writeFint8(int8_t value) {
+    write(&value, sizeof(value));
+}
+
+void ByteArray::writeFuint8(uint8_t value) {
+    write(&value, sizeof(value));
+}
+
+void ByteArray::writeFint16(int16_t value) {
+    if (m_endian != hyn_BYTE_ORDER) {
+        value = byteswap(value);
+    }
+    write(&value, sizeof(value));
+}
+
+void ByteArray::writeFuint16(uint16_t value) {
+    if (m_endian != hyn_BYTE_ORDER) {
+        value = byteswap(value);
+    }
+    write(&value, sizeof(value));
+}
+
+void ByteArray::writeFint32(int32_t value) {
+    if (m_endian != hyn_BYTE_ORDER) {
+        value = byteswap(value);
+    }
+    write(&value, sizeof(value));
+}
+
+void ByteArray::writeFuint32(uint32_t value) {
+    if (m_endian != hyn_BYTE_ORDER) {
+        value = byteswap(value);
+    }
+    write(&value, sizeof(value));
+}
+
+void ByteArray::writeFint64(int64_t value) {
+    if (m_endian != hyn_BYTE_ORDER) {
+        value = byteswap(value);
+    }
+    write(&value, sizeof(value));
+}
+
+void ByteArray::writeFuint64(uint64_t value) {
+    if (m_endian != hyn_BYTE_ORDER) {
+        value = byteswap(value);
+    }
+    write(&value, sizeof(value));
 }
 
 size_t ByteArray::getPos() const {
@@ -380,27 +431,27 @@ void ByteArray::writeUint64(uint64_t value) {
 void ByteArray::writeFloat(float value) {
     uint32_t v;
     memcpy(&v, &value, sizeof(value));
-    writeFixation(v);
+    writeFuint32(v);
 }
 
 void ByteArray::writeDouble(double value) {
     uint64_t v;
     memcpy(&v, &value, sizeof(value));
-    writeFixation(v);
+    writeFuint64(v);
 }
 
 void ByteArray::writeStringF16(const std::string &value) {
-    writeFixation<uint16_t>(value.size());
+    writeFuint16(value.size());
     write(value.c_str(), value.size());
 }
 
 void ByteArray::writeStringF32(const std::string &value) {
-    writeFixation<uint32_t>(value.size());
+    writeFuint32(value.size());
     write(value.c_str(), value.size());
 }
 
 void ByteArray::writeStringF64(const std::string &value) {
-    writeFixation<uint64_t>(value.size());
+    writeFuint64(value.size());
     write(value.c_str(), value.size());
 }
 
@@ -413,6 +464,80 @@ void ByteArray::writeStringWithoutLength(const std::string &value) {
     write(value.c_str(), value.size());
 }
 
+int8_t ByteArray::readFint8() {
+    int8_t v;
+    read(&v, sizeof(v));
+    return v;
+}
+
+uint8_t ByteArray::readFuint8() {
+    uint8_t v;
+    read(&v, sizeof(v));
+    return v;
+}
+
+
+int16_t ByteArray::readFint16() {
+    int16_t v;
+    read(&v, sizeof(v));
+    if (m_endian == hyn_BYTE_ORDER) {
+        return v;
+    } else {
+        return byteswap(v);
+    }
+}
+
+uint16_t ByteArray::readFuint16() {
+    uint16_t v;
+    read(&v, sizeof(v));
+    if (m_endian == hyn_BYTE_ORDER) {
+        return v;
+    } else {
+        return byteswap(v);
+    }
+}
+
+int32_t ByteArray::readFint32() {
+    int32_t v;
+    read(&v, sizeof(v));
+    if (m_endian == hyn_BYTE_ORDER) {
+        return v;
+    } else {
+        return byteswap(v);
+    }
+}
+
+uint32_t ByteArray::readFuint32() {
+    uint32_t v;
+    read(&v, sizeof(v));
+    if (m_endian == hyn_BYTE_ORDER) {
+        return v;
+    } else {
+        return byteswap(v);
+    }
+}
+
+int64_t ByteArray::readFint64() {
+    int64_t v;
+    read(&v, sizeof(v));
+    if (m_endian == hyn_BYTE_ORDER) {
+        return v;
+    } else {
+        return byteswap(v);
+    }
+}
+
+uint64_t ByteArray::readFuint64() {
+    uint64_t v;
+    read(&v, sizeof(v));
+    if (m_endian == hyn_BYTE_ORDER) {
+        return v;
+    } else {
+        return byteswap(v);
+    }
+}
+
+
 int32_t ByteArray::readInt32() {
     return DecodeZigzag32(readUint32());
 }
@@ -420,7 +545,7 @@ int32_t ByteArray::readInt32() {
 uint32_t ByteArray::readUint32() {
     uint32_t res = 0;
     for (int i = 0; i < 32; ++i) {
-        uint8_t bytes = readFixation<uint8_t>();
+        uint8_t bytes = readFuint8();
         if (bytes < 0x80) {
             res |= static_cast<uint32_t>(bytes) << 1;
         } else {
@@ -437,7 +562,7 @@ int64_t ByteArray::readInt64() {
 uint64_t ByteArray::readUint64() {
     uint64_t res = 0;
     for (int i = 0; i < 64; ++i) {
-        uint8_t bytes = readFixation<uint8_t>();
+        uint8_t bytes = readFuint8();
         if (bytes < 0x80) {
             res |= static_cast<uint64_t>(bytes) << 1;
         } else {
@@ -448,21 +573,21 @@ uint64_t ByteArray::readUint64() {
 }
 
 float ByteArray::readFloat() {
-    auto v = readFixation<uint32_t>();
+    auto v = readFuint32();
     float value;
     memcpy(&value, &v, sizeof(v));
     return value;
 }
 
 double ByteArray::readDouble() {
-    auto v = readFixation<uint64_t>();
+    auto v = readFuint64();
     double value;
     memcpy(&value, &v, sizeof(v));
     return value;
 }
 
 std::string ByteArray::readStringF16() {
-    auto len = readFixation<uint16_t>();
+    auto len = readFuint16();
     std::string buff;
     buff.resize(len);
     read(&buff[0], len);
@@ -470,7 +595,7 @@ std::string ByteArray::readStringF16() {
 }
 
 std::string ByteArray::readStringF32() {
-    auto len = readFixation<uint32_t>();
+    auto len = readFuint32();
     std::string buff;
     buff.resize(len);
     read(&buff[0], len);
@@ -478,7 +603,7 @@ std::string ByteArray::readStringF32() {
 }
 
 std::string ByteArray::readStringF64() {
-    auto len = readFixation<uint64_t>();
+    auto len = readFuint64();
     std::string buff;
     buff.resize(len);
     read(&buff[0], len);
@@ -486,7 +611,7 @@ std::string ByteArray::readStringF64() {
 }
 
 std::string ByteArray::readStringVint() {
-    auto len = readFixation<uint64_t>();
+    auto len = readFuint64();
     std::string buff;
     buff.resize(len);
     read(&buff[0], len);
