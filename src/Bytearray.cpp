@@ -13,10 +13,11 @@
 #include "ByteArray.h"
 #include <cstring>
 #include <iomanip>
+#include <cmath>
 
 namespace hyn {
 
-ByteArray::Node::Node(size_t s) : ptr(new char[s]), size(0) {
+ByteArray::Node::Node(size_t s) : ptr(new char[s]), size(s) {
 }
 
 ByteArray::Node::Node() = default;
@@ -116,7 +117,7 @@ bool ByteArray::writeToFile(const std::string &fileName) {
     Node *cur = m_cur;
     while (read_size > 0) {
         auto diff = pos % m_baseSize;
-        auto len = read_size > m_baseSize ? m_baseSize : read_size - diff;
+        auto len = (read_size > m_baseSize ? m_baseSize : read_size) - diff;
         ofs.write(cur->ptr, static_cast<long>(len));
         cur = cur->next;
         pos += len;
@@ -140,20 +141,26 @@ void ByteArray::clear() {
 }
 
 void ByteArray::write(const void *buff, size_t size) {
-    if (size <= 0)
+    if (size == 0) {
         return;
+    }
     addCapacity(size);
-    size_t npos = m_pos % m_baseSize, ncap = m_cur->size - npos, bpos = 0;
+
+    size_t npos = m_pos % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    size_t bpos = 0;
+
     while (size > 0) {
         if (ncap >= size) {
-            memcpy(m_cur->ptr + npos, static_cast<const char *>(buff) + bpos, size);
-            if (m_cur->size == (npos + size))
+            memcpy(m_cur->ptr + npos, (const char *) buff + bpos, size);
+            if (m_cur->size == (npos + size)) {
                 m_cur = m_cur->next;
+            }
             m_pos += size;
             bpos += size;
             size = 0;
         } else {
-            memcpy(m_cur->ptr + npos, static_cast<const char *>(buff) + bpos, ncap);
+            memcpy(m_cur->ptr + npos, (const char *) buff + bpos, ncap);
             m_pos += ncap;
             bpos += ncap;
             size -= ncap;
@@ -162,18 +169,20 @@ void ByteArray::write(const void *buff, size_t size) {
             npos = 0;
         }
     }
-    if (m_pos > m_size)
+
+    if (m_pos > m_size) {
         m_size = m_pos;
+    }
 }
 
 void ByteArray::addCapacity(size_t size) {
     if (size == 0)
         return;
     size_t old_cap = getCapacity();
-    if (old_cap > size)
+    if (old_cap >= size)
         return;
     size -= old_cap;
-    size_t count = size / m_baseSize + 1;
+    size_t count = ceil(1.0 * size / m_baseSize);
     Node *first = nullptr, *last = m_root;
     while (last->next != nullptr)
         last = last->next;
@@ -189,16 +198,24 @@ void ByteArray::addCapacity(size_t size) {
 }
 
 void ByteArray::read(void *buff, size_t size) {
-    THROW_OUT_OF_RANGE_IF(size > m_size - m_pos, "not enough len");
-    size_t npos = m_pos % m_baseSize, ncap = m_capacity - m_pos, bpos = 0;
+    if (size > getReadSize()) {
+        throw std::out_of_range("not enough len");
+    }
+
+    size_t npos = m_pos % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    size_t bpos = 0;
     while (size > 0) {
         if (ncap >= size) {
-            memcpy(static_cast<char *>(buff), m_cur->ptr + npos, size);
+            memcpy((char *) buff + bpos, m_cur->ptr + npos, size);
+            if (m_cur->size == (npos + size)) {
+                m_cur = m_cur->next;
+            }
             m_pos += size;
             bpos += size;
             size = 0;
         } else {
-            memcpy(static_cast<char *>(buff) + bpos, m_cur->ptr + npos, ncap);
+            memcpy((char *) buff + bpos, m_cur->ptr + npos, ncap);
             m_pos += ncap;
             bpos += ncap;
             size -= ncap;
@@ -210,19 +227,22 @@ void ByteArray::read(void *buff, size_t size) {
 }
 
 void ByteArray::read(void *buff, size_t size, size_t position) const {
-    THROW_OUT_OF_RANGE_IF(size > m_size - position, "not enough len");
-    size_t npos = position % m_baseSize, ncap = m_capacity - npos, bpos = 0;
+    THROW_OUT_OF_RANGE_IF(size > (m_size - position), "not enough len");
+    size_t npos = position % m_baseSize;
+    size_t ncap = m_cur->size - npos;
+    size_t bpos = 0;
     Node *cur = m_cur;
     while (size > 0) {
         if (ncap >= size) {
-            memcpy(static_cast<char *>(buff), cur->ptr + npos, size);
-            if (cur->size == (npos + size))
+            memcpy((char *) buff + bpos, cur->ptr + npos, size);
+            if (cur->size == (npos + size)) {
                 cur = cur->next;
+            }
             position += size;
             bpos += size;
             size = 0;
         } else {
-            memcpy(static_cast<char *>(buff) + bpos, cur->ptr + npos, ncap);
+            memcpy((char *) buff + bpos, cur->ptr + npos, ncap);
             position += ncap;
             bpos += ncap;
             size -= ncap;
@@ -544,12 +564,13 @@ int32_t ByteArray::readInt32() {
 
 uint32_t ByteArray::readUint32() {
     uint32_t res = 0;
-    for (int i = 0; i < 32; ++i) {
+    for (int i = 0; i < 32; i += 7) {
         uint8_t bytes = readFuint8();
         if (bytes < 0x80) {
-            res |= static_cast<uint32_t>(bytes) << 1;
+            res |= static_cast<uint32_t>(bytes) << i;
+            break;
         } else {
-            res |= static_cast<uint32_t>(bytes & 0x7f) << 1;
+            res |= static_cast<uint32_t>(bytes & 0x7f) << i;
         }
     }
     return res;
@@ -561,12 +582,13 @@ int64_t ByteArray::readInt64() {
 
 uint64_t ByteArray::readUint64() {
     uint64_t res = 0;
-    for (int i = 0; i < 64; ++i) {
+    for (int i = 0; i < 64; i += 7) {
         uint8_t bytes = readFuint8();
         if (bytes < 0x80) {
-            res |= static_cast<uint64_t>(bytes) << 1;
+            res |= static_cast<uint64_t>(bytes) << i;
+            break;
         } else {
-            res |= static_cast<uint64_t>(bytes & 0x7f) << 1;
+            res |= static_cast<uint64_t>(bytes & 0x7f) << i;
         }
     }
     return res;
