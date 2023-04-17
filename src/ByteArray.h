@@ -60,6 +60,72 @@ class ByteArray {
 
     ~ByteArray();
 
+    /**
+     *@brief 写入固定长度的数据（大端/小端）
+     *@note int8_t,uint8_t,int16_t,uint16_t,int32_t,uint32_t,int64_t,uint64_t,
+     */
+    template<typename T>
+    void writeFixation(T value);
+
+    /**
+     * @brief 写入有符号Varint32类型的数据
+     * @note 采用Varint编码
+     */
+    void writeInt32(int32_t value);
+
+    /**
+     * @brief 写入无符号Varint32类型的数据
+     * @note 采用Varint编码
+     */
+    void writeUint32(uint32_t value);
+
+    /**
+     * @brief 写入有符号Varint64类型的数据
+     * @note 采用Varint编码
+     */
+    void writeInt64(int64_t value);
+
+    /**
+     * @brief 写入无符号Varint64类型的数据
+     * @note 采用Varint编码
+     */
+    void writeUint64(uint64_t value);
+
+    /**
+     * @brief 写入float类型的数据
+     */
+    void writeFloat(float value);
+
+    /**
+     * @brief 写入double类型的数据
+     */
+    void writeDouble(double value);
+
+
+    /**
+     * @brief 写入std::string类型的数据,用uint16_t作为长度类型
+     */
+    void writeStringF16(const std::string &value);
+
+    /**
+     * @brief 写入std::string类型的数据,用uint32_t作为长度类型
+     */
+    void writeStringF32(const std::string &value);
+
+    /**
+     * @brief 写入std::string类型的数据,用uint64_t作为长度类型
+     */
+    void writeStringF64(const std::string &value);
+
+    /**
+     * @brief 写入std::string类型的数据,用无符号Varint64作为长度类型
+     */
+    void writeStringVint(const std::string &value);
+
+    /**
+     * @brief 写入std::string类型的数据,无长度
+     */
+    void writeStringWithoutLength(const std::string &value);
 
     /**
     *@brief 写入size长度的数据
@@ -101,7 +167,6 @@ class ByteArray {
      */
     bool readFromFile(const std::string &fileName);
 
-
     /**
     * @brief 返回ByteArray当前位置
     */
@@ -138,13 +203,13 @@ class ByteArray {
      *@brief 将ByteArray里的数据转成string
      *@note [m_pos,_size)
      */
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
     /**
      *@brief 将ByteArray里的数据转成16进制string
      *@note [m_pos,_size)
      */
-    std::string toHexString() const;
+    [[nodiscard]] std::string toHexString() const;
 
     /**
      * @brief 获取可读取的缓存,保存成iovec数组
@@ -186,6 +251,26 @@ class ByteArray {
 
 private:
     /**
+     *@brief 采用Zigzag编码将32位有符号整数编码为无符号整数
+     */
+    static uint32_t EncodeZigzag32(const uint32_t &value);
+
+    /**
+     *@brief 采用Zigzag编码将64位有符号整数编码为无符号整数
+     */
+    static uint64_t EncodeZigzag64(const uint64_t &value);
+
+    /**
+     *@brief 采用Zigzag编码解码32位有符号整数
+     */
+    static int32_t DecodeZigzag32(int32_t value);
+
+    /**
+    *@brief 采用Zigzag编码解码64位有符号整数
+    */
+    static int64_t DecodeZigzag64(int64_t value);
+
+    /**
      *@brief 如果不能容纳size，则扩容ByteArray
      *@param size
      */
@@ -212,6 +297,26 @@ private:
     ///当前操作的内存块指针
     Node *m_cur;
 };
+
+
+template<typename T>
+void ByteArray::writeFixation(T value) {
+    if (m_endian != hyn_BYTE_ORDER) {
+        value = byteswap(value);
+    }
+    write(&value, sizeof(value));
+}
+
+template<>
+void ByteArray::writeFixation(uint8_t value) {
+    write(&value, sizeof(value));
+}
+
+template<>
+void ByteArray::writeFixation(int8_t value) {
+    write(&value, sizeof(value));
+}
+
 
 } // hyn
 

@@ -323,5 +323,94 @@ uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
     return size;
 }
 
+uint32_t ByteArray::EncodeZigzag32(const uint32_t &value) {
+    if (value < 0) {
+        return (static_cast<uint32_t>(-value)) * 2 - 1;
+    } else {
+        return value * 2;
+    }
+}
+
+uint64_t ByteArray::EncodeZigzag64(const uint64_t &value) {
+    if (value < 0) {
+        return (static_cast<uint64_t>(-value)) * 2 - 1;
+    } else {
+        return value * 2;
+    }
+}
+
+int32_t ByteArray::DecodeZigzag32(int32_t value) {
+    return (value >> 1) ^ (-(value & 1));
+}
+
+int64_t ByteArray::DecodeZigzag64(int64_t value) {
+    return (value >> 1) ^ (-(value & 1));
+}
+
+void ByteArray::writeInt32(int32_t value) {
+    writeUint32(EncodeZigzag32(value));
+}
+
+void ByteArray::writeUint32(uint32_t value) {
+    uint8_t temp[5];
+    uint8_t i = 0;
+    while (value >= 0x80) {
+        temp[i++] = (value & 0x7F) | 0x80;
+        value >>= 7;
+    }
+    temp[i++] = value;
+    write(temp, i);
+}
+
+void ByteArray::writeInt64(int64_t value) {
+    writeUint64(EncodeZigzag64(value));
+}
+
+void ByteArray::writeUint64(uint64_t value) {
+    uint8_t temp[10];
+    uint8_t i = 0;
+    while (value >= 0x80) {
+        temp[i++] = (value & 0x7F) | 0x80;
+        value >>= 7;
+    }
+    temp[i++] = value;
+    write(temp, i);
+}
+
+void ByteArray::writeFloat(float value) {
+    uint32_t v;
+    memcpy(&v, &value, sizeof(value));
+    writeFixation(v);
+}
+
+void ByteArray::writeDouble(double value) {
+    uint64_t v;
+    memcpy(&v, &value, sizeof(value));
+    writeFixation(v);
+}
+
+void ByteArray::writeStringF16(const std::string &value) {
+    writeFixation<uint16_t>(value.size());
+    write(value.c_str(), value.size());
+}
+
+void ByteArray::writeStringF32(const std::string &value) {
+    writeFixation<uint32_t>(value.size());
+    write(value.c_str(), value.size());
+}
+
+void ByteArray::writeStringF64(const std::string &value) {
+    writeFixation<uint64_t>(value.size());
+    write(value.c_str(), value.size());
+}
+
+void ByteArray::writeStringVint(const std::string &value) {
+    writeUint64(value.size());
+    write(value.c_str(), value.size());
+}
+
+void ByteArray::writeStringWithoutLength(const std::string &value) {
+    write(value.c_str(), value.size());
+}
 
 } // hyn
