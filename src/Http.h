@@ -181,12 +181,170 @@ struct CaseInsensitiveLess {
     bool operator()(const std::string &lhs, const std::string &rhs) const;
 };
 
+/**
+ * @brief 获取Map中的key值,并转成对应类型
+ * @param[in] m Map数据结构
+ * @param[in] key 关键字
+ * @param[in] def 默认值
+ * @return 如果存在且转换成功返回对应的值,否则返回默认值
+ */
+template<typename T, typename MapType>
+bool getAs(const MapType &m, const std::string &key, const T &def = T()) {
+    auto it = m.find(key);
+    if (it == m.end())
+        return def;
+    try {
+        return boost::lexical_cast<T>(it->second());
+    } catch (...) {
+    }
+    return def;
+};
+
+/**
+ * @brief 获取Map中的key值,并转成对应类型,返回是否成功
+ * @param[in] m Map数据结构
+ * @param[in] key 关键字
+ * @param[out] value 保存转换后的值
+ * @param[in] def 默认值
+ * @return
+ *      @retval true 转换成功, val 为对应的值
+ *      @retval false 不存在或者转换失败 val = def
+ */
+template<typename T, typename MapType>
+bool checkGetAs(const MapType &m, const std::string &key, T &value, const T &def = T()) {
+    auto it = m.find(key);
+    if (it == m.end()) {
+        value = def;
+        return false;
+    }
+    try {
+        value = boost::lexical_cast<T>(it->second());
+        return true;
+    } catch (...) {
+        value = def;
+    }
+    return false;
+}
+
 class HttpRequest {
 public:
     using ptr = std::shared_ptr<HttpRequest>;
     using MapType = std::map<std::string, std::string, CaseInsensitiveLess>;
 public:
+    /**
+     *@brief 构造函数
+     *@param version 版本，默认：1.1
+     *@param close 默认：true，若为false：keepalive
+     */
+    explicit HttpRequest(uint8_t version = 0x11, bool close = true);
 
+    /**
+     *@brief 创建一个与该请求相关联的响应对象
+     */
+    std::shared_ptr<HttpRequest> creatResponse();
+
+    /**
+    * @brief 获取HTTP请求的头部参数
+    * @param[in] key 关键字
+    * @param[in] def 默认值
+    * @return 如果存在则返回对应值,否则返回默认值
+    */
+    [[nodiscard]] std::string getHeader(const std::string &key, const std::string &def = "") const;
+
+    /**
+    * @brief 获取HTTP请求的参数
+    * @param[in] key 关键字
+    * @param[in] def 默认值
+    * @return 如果存在则返回对应值,否则返回默认值
+    */
+    std::string getParam(const std::string &key, const std::string &def = "");
+
+    /**
+    * @brief 获取HTTP请求的Cookie参数
+    * @param[in] key 关键字
+    * @param[in] def 默认值
+    * @return 如果存在则返回对应值,否则返回默认值
+    */
+    std::string getCookie(const std::string &key, const std::string &def = "");
+
+
+    /**
+     * @brief 设置HTTP请求的头部参数
+     * @param[in] key 关键字
+     * @param[in] val 值
+     */
+    void setHeader(const std::string &key, const std::string &value);
+
+
+    /**
+     * @brief 设置HTTP请求的参数
+     * @param[in] key 关键字
+     * @param[in] val 值
+     */
+    void setParam(const std::string &key, const std::string &value);
+
+    /**
+     * @brief 设置HTTP请求的Cookie参数
+     * @param[in] key 关键字
+     * @param[in] val 值
+     */
+    void setCookie(const std::string &key, const std::string &value);
+
+    /**
+    * @brief 删除HTTP请求的头部参数
+    * @param[in] key 关键字
+    */
+    void delHeader(const std::string &key);
+
+    /**
+    * @brief 删除HTTP请求的参数
+    * @param[in] key 关键字
+    */
+    void delParam(const std::string &key);
+
+    /**
+    * @brief 删除HTTP请求的Cookie参数
+    * @param[in] key 关键字
+    */
+    void delCookie(const std::string &key);
+
+    /**
+     * @brief 判断HTTP请求的头部参数是否存在
+     * @param[in] key 关键字
+     * @param[out] val 如果存在,val非空则赋值
+     * @return 是否存在
+     */
+    bool hasHeader(const std::string &key, std::string *value = nullptr);
+
+    /**
+     * @brief 判断HTTP请求的参数是否存在
+     * @param[in] key 关键字
+     * @param[out] val 如果存在,val非空则赋值
+     * @return 是否存在
+     */
+    bool hasParam(const std::string &key, std::string *value = nullptr);
+
+    /**
+     * @brief 判断HTTP请求的Cookie参数是否存在
+     * @param[in] key 关键字
+     * @param[out] val 如果存在,val非空则赋值
+     * @return 是否存在
+     */
+    bool hasCookie(const std::string &key, std::string *value = nullptr);
+
+    /**
+     *@brief 检查并获取HTTP请求的头部参数
+     *@param key 关键字
+     *@param [out]value 返回值
+     *@param def 默认值
+     *@return 如果存在且转换成功返回true，否则false
+     */
+    template<typename T>
+    bool checkGetHeaderAs(const std::string &key, T &value, const T &def = T()) {
+        return checkGetAs(m_headers, key, value, def);
+    }
+
+private:
 
 public:
     /****************       Getter and Setter       ****************/
@@ -299,7 +457,7 @@ private:
     uint8_t m_parserParamFlag;
     ///HTTP方法
     HttpMethod m_method;
-    ///HTTP版本
+    ///HTTP版本：1.0:0x10 1.1:0x11 ......
     uint8_t m_version;
     ///请求路径
     std::string m_path;
@@ -316,7 +474,6 @@ private:
     ///请求Cookie MAP
     MapType m_cookies;
 };
-
 
 } // hyn::http
 
