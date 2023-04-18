@@ -146,6 +146,177 @@ enum class HttpStatus {
 #undef XX
 };
 
+/**
+ * @brief 将字符串方法名转成HTTP方法枚举
+ * @param[in] m HTTP方法
+ * @return HTTP方法枚举
+ */
+HttpMethod StringToHttpMethod(const std::string &str);
+
+/**
+ * @brief 将字符串指针转换成HTTP方法枚举
+ * @param[in] m 字符串方法枚举
+ * @return HTTP方法枚举
+ */
+HttpMethod CharToHttpMethod(const char *str);
+
+/**
+ * @brief 将HTTP方法枚举转换成字符串
+ * @param[in] m HTTP方法枚举
+ * @return 字符串
+ */
+const char *HttpMethodToString(const HttpMethod &httpMethod);
+
+/**
+ * @brief 将HTTP状态枚举转换成字符串
+ * @param[in] m HTTP状态枚举
+ * @return 字符串
+ */
+const char *HttpStatusToString(const HttpStatus &httpStatus);
+
+/**
+ *@brief 忽略大小写比较字符串的仿函数
+ */
+struct CaseInsensitiveLess {
+    bool operator()(const std::string &lhs, const std::string &rhs) const;
+};
+
+class HttpRequest {
+public:
+    using ptr = std::shared_ptr<HttpRequest>;
+    using MapType = std::map<std::string, std::string, CaseInsensitiveLess>;
+public:
+
+
+public:
+    /****************       Getter and Setter       ****************/
+
+    [[nodiscard]] bool isAutoClose() const {
+        return m_autoClose;
+    }
+
+    void setAutoClose(bool mAutoClose) {
+        m_autoClose = mAutoClose;
+    }
+
+    [[nodiscard]] bool isIsWebSocket() const {
+        return m_isWebSocket;
+    }
+
+    void setIsWebSocket(bool mIsWebSocket) {
+        m_isWebSocket = mIsWebSocket;
+    }
+
+    [[nodiscard]] uint8_t getParserParamFlag() const {
+        return m_parserParamFlag;
+    }
+
+    void setParserParamFlag(uint8_t mParserParamFlag) {
+        m_parserParamFlag = mParserParamFlag;
+    }
+
+    [[nodiscard]] HttpMethod getMethod() const {
+        return m_method;
+    }
+
+    void setMethod(HttpMethod mMethod) {
+        m_method = mMethod;
+    }
+
+    [[nodiscard]] uint8_t getVersion() const {
+        return m_version;
+    }
+
+    void setVersion(uint8_t mVersion) {
+        m_version = mVersion;
+    }
+
+    [[nodiscard]] const std::string &getPath() const {
+        return m_path;
+    }
+
+    void setPath(const std::string &mPath) {
+        m_path = mPath;
+    }
+
+    [[nodiscard]] const std::string &getQuery() const {
+        return m_query;
+    }
+
+    void setQuery(const std::string &mQuery) {
+        m_query = mQuery;
+    }
+
+    [[nodiscard]] const std::string &getFragment() const {
+        return m_fragment;
+    }
+
+    void setFragment(const std::string &mFragment) {
+        m_fragment = mFragment;
+    }
+
+    [[nodiscard]] const std::string &getBody() const {
+        return m_body;
+    }
+
+    void setBody(const std::string &mBody) {
+        m_body = mBody;
+    }
+
+    [[nodiscard]] const MapType &getHeaders() const {
+        return m_headers;
+    }
+
+    void setHeaders(const MapType &mHeaders) {
+        m_headers = mHeaders;
+    }
+
+    [[nodiscard]] const MapType &getParams() const {
+        return m_params;
+    }
+
+    void setParams(const MapType &mParams) {
+        m_params = mParams;
+    }
+
+    [[nodiscard]] const MapType &getCookies() const {
+        return m_cookies;
+    }
+
+    void setCookies(const MapType &mCookies) {
+        m_cookies = mCookies;
+    }
+
+private:
+    //https://www.example.com:8080/index.html?search=keyword#section1
+    //协议为HTTPS，主机名为www.example.com，端口号为8080，路径为/index.html，查询参数为search=keyword，片段标识符为section1。
+
+    ///谁否自动关闭(长连接)
+    bool m_autoClose;
+    ///是否为websocket
+    bool m_isWebSocket;
+    ///请求解析时是否已经解析过参数
+    uint8_t m_parserParamFlag;
+    ///HTTP方法
+    HttpMethod m_method;
+    ///HTTP版本
+    uint8_t m_version;
+    ///请求路径
+    std::string m_path;
+    ///请求参数
+    std::string m_query;
+    ///片段标识符（请求fragment）
+    std::string m_fragment;
+    ///请求消息体
+    std::string m_body;
+    ///请求头部 MAP
+    MapType m_headers;
+    ///请求参数 MAP
+    MapType m_params;
+    ///请求Cookie MAP
+    MapType m_cookies;
+};
+
 
 } // hyn::http
 
