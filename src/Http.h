@@ -353,8 +353,29 @@ public:
         return checkGetAs(m_headers, key, value, def);
     }
 
-private:
+    /**
+     *@brief 序列化输出流
+     */
+    std::ostream &dump(std::ostream &os) const;
 
+    /**
+     *@brief 转成字符串
+     */
+    std::string toString() const;
+
+private:
+    /**
+     *@brief 初始化是否keep-live
+     */
+    void initClose();
+
+    void initPram();
+
+    void initQueryParam();
+
+    void initBodyParam();
+
+    void initCookies();
 
 public:
     /****************       Getter and Setter       ****************/
