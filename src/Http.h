@@ -147,6 +147,15 @@ enum class HttpStatus {
 };
 
 /**
+ *@brief HTTP方法名数组
+ */
+static const char *s_method_string[] = {
+#define XX(num, name, string) #string,
+        HTTP_METHOD_MAP(XX)
+#undef XX
+};
+
+/**
  * @brief 将字符串方法名转成HTTP方法枚举
  * @param[in] m HTTP方法
  * @return HTTP方法枚举
@@ -198,7 +207,7 @@ bool getAs(const MapType &m, const std::string &key, const T &def = T()) {
     } catch (...) {
     }
     return def;
-};
+}
 
 /**
  * @brief 获取Map中的key值,并转成对应类型,返回是否成功
@@ -346,6 +355,7 @@ public:
 
 private:
 
+
 public:
     /****************       Getter and Setter       ****************/
 
@@ -462,11 +472,11 @@ private:
     ///请求路径
     std::string m_path;
     ///请求参数
-    std::string m_query;
+    std::string m_query{};
     ///片段标识符（请求fragment）
-    std::string m_fragment;
+    std::string m_fragment{};
     ///请求消息体
-    std::string m_body;
+    std::string m_body{};
     ///请求头部 MAP
     MapType m_headers;
     ///请求参数 MAP

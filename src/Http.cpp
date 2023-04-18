@@ -32,27 +32,40 @@ HttpMethod CharToHttpMethod(const char *str) {
 }
 
 const char *HttpMethodToString(const HttpMethod &httpMethod) {
-
+    auto idx = static_cast<uint32_t>(httpMethod);
+    if (idx >= (sizeof(s_method_string) / sizeof(s_method_string[0]))) {
+        return "<unknown>";
+    }
+    return s_method_string[idx];
 }
 
 const char *HttpStatusToString(const HttpStatus &httpStatus) {
-
+    switch (httpStatus) {
+#define XX(code, name, msg) \
+    case HttpStatus::name:\
+    return #msg;
+        HTTP_STATUS_MAP(XX)
+#undef XX
+        default:
+            return "<unknown>";
+    }
 }
-
 bool CaseInsensitiveLess::operator()(const std::string &lhs, const std::string &rhs) const {
     return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
 }
 
-HttpRequest::HttpRequest(uint8_t version, bool close) {
-
+HttpRequest::HttpRequest(uint8_t version, bool close) : m_autoClose(close), m_isWebSocket(false), m_parserParamFlag(0),
+                                                        m_method(HttpMethod::GET), m_version(version), m_path("/") {
 }
 
 std::shared_ptr<HttpRequest> HttpRequest::creatResponse() {
-    return std::shared_ptr<HttpRequest>();
+
+
 }
 
 std::string HttpRequest::getHeader(const std::string &key, const std::string &def) const {
-    return std::string();
+    auto it = m_headers.find(key);
+    return it == m_headers.end() ? def : it->second;
 }
 
 std::string HttpRequest::getParam(const std::string &key, const std::string &def) {
