@@ -361,7 +361,7 @@ public:
     /**
      *@brief 转成字符串
      */
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
 private:
     /**
@@ -504,6 +504,155 @@ private:
     MapType m_params;
     ///请求Cookie MAP
     MapType m_cookies;
+};
+
+
+class HttpResponse {
+public:
+    /// HTTP响应结构智能指针
+    typedef std::shared_ptr<HttpResponse> ptr;
+    /// MapType
+    typedef std::map<std::string, std::string, CaseInsensitiveLess> MapType;
+
+    explicit HttpResponse(uint8_t version = 0x11, bool close = true);
+
+    /**
+     * @brief 获取HTTP请求的头部参数
+     * @param[in] key 关键字
+     * @param[in] def 默认值
+     * @return 如果存在则返回对应值,否则返回默认值
+     */
+    [[nodiscard]] std::string getHeader(const std::string &key, const std::string &def = "") const;
+
+    /**
+     * @brief 设置HTTP请求的头部参数
+     * @param[in] key 关键字
+     * @param[in] val 值
+     */
+    void setHeader(const std::string &key, const std::string &value);
+
+    /**
+    * @brief 删除HTTP请求的头部参数
+    * @param[in] key 关键字
+    */
+    void delHeader(const std::string &key);
+
+    /**
+     *@brief 序列化输出流
+     */
+    std::ostream &dump(std::ostream &os) const;
+
+    /**
+     *@brief 转成字符串
+     */
+    [[nodiscard]] std::string toString() const;
+
+    /**
+   * @brief 检查并获取响应头部参数
+   * @tparam T 值类型
+   * @param[in] key 关键字
+   * @param[out] val 值
+   * @param[in] def 默认值
+   * @return 如果存在且转换成功返回true,否则失败val=def
+   */
+    template<class T>
+    bool checkGetHeaderAs(const std::string &key, T &val, const T &def = T()) {
+        return checkGetAs(m_headers, key, val, def);
+    }
+
+    /**
+     * @brief 获取响应的头部参数
+     * @tparam T 转换类型
+     * @param[in] key 关键字
+     * @param[in] def 默认值
+     * @return 如果存在且转换成功返回对应的值,否则返回def
+     */
+    template<class T>
+    T getHeaderAs(const std::string &key, const T &def = T()) {
+        return getAs(m_headers, key, def);
+    }
+    /************* getter and setter *************/
+public:
+    [[nodiscard]] HttpStatus getStatus() const {
+        return m_status;
+    }
+
+    void setStatus(HttpStatus mStatus) {
+        m_status = mStatus;
+    }
+
+    [[nodiscard]] uint8_t getVersion() const {
+        return m_version;
+    }
+
+    void setVersion(uint8_t mVersion) {
+        m_version = mVersion;
+    }
+
+    [[nodiscard]] bool isAutoClose() const {
+        return m_autoClose;
+    }
+
+    void setAutoClose(bool mAutoClose) {
+        m_autoClose = mAutoClose;
+    }
+
+    [[nodiscard]] bool isWebsocket() const {
+        return m_websocket;
+    }
+
+    void setWebsocket(bool mWebsocket) {
+        m_websocket = mWebsocket;
+    }
+
+    [[nodiscard]] const std::string &getBody() const {
+        return m_body;
+    }
+
+    void setBody(const std::string &mBody) {
+        m_body = mBody;
+    }
+
+    [[nodiscard]] const std::string &getReason() const {
+        return m_reason;
+    }
+
+    void setReason(const std::string &mReason) {
+        m_reason = mReason;
+    }
+
+    [[nodiscard]] const MapType &getHeaders() const {
+        return m_headers;
+    }
+
+    void setHeaders(const MapType &mHeaders) {
+        m_headers = mHeaders;
+    }
+
+private:
+    //HTTP/1.1 200 OK\r\n
+    //Content-Type: text/html\r\n
+    //Content-Length: 1024\r\n
+    //Server: Apache/2.2.14 (Win32)\r\n
+    //...
+    //\r\n
+
+    ///响应状态
+    HttpStatus m_status;
+    ///版本
+    uint8_t m_version;
+    ///是否自动关闭
+    bool m_autoClose;
+    ///是否websocket
+    bool m_websocket{false};
+    ///消息体
+    std::string m_body{};
+    ///原因
+    std::string m_reason{};
+    ///头部MAP
+    MapType m_headers;
+    ///Cookies
+    std::vector<std::string> m_cookies;
 };
 
 } // hyn::http
