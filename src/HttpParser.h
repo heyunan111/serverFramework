@@ -89,73 +89,6 @@ public:
     }
 
 private:
-    /**
-     *@brief 处理 HTTP 请求头部字段的回调函数
-     *@param data 用户数据
-     *@param field 字段名起始位置
-     *@param flen 字段名长度
-     *@param value 字段值起始位置
-     *@param vlen 字段值长度
-     */
-    void on_request_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen);
-
-    /**
-     *@brief 处理 HTTP 请求方法的回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_request_method(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 处理 HTTP 请求 URI 的回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_request_uri(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 处理 HTTP URI 中的片段标识符的回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_request_fragment(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 处理 HTTP 请求路径的回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_request_path(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 处理 HTTP 查询字符串的回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_request_query_string(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 处理 HTTP 协议版本的回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_request_http_version(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 处理 HTTP 请求头部结束的回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_request_header_done(void *data, const char *at, size_t length);
-
-private:
     /// http_parser
     http_parser m_parser;
     /// HttpRequest结构
@@ -237,67 +170,6 @@ public:
     void setError(int mError) {
         m_error = mError;
     }
-
-private:
-    /**
-     *@brief 处理 HTTP 请求头部字段的回调函数
-     *@param data 用户数据
-     *@param field 字段名起始位置
-     *@param flen 字段名长度
-     *@param value 字段值起始位置
-     *@param vlen 字段值长度
-     */
-    void on_response_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen);
-
-    /**
-     *@brief 响应状态码原因短语回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_response_reason_phrase(void *data, const char *at, size_t length);
-
-    /**
-    *@brief 响应状态码回调函数
-    *@param data 用户数据
-    *@param at 字符串起始位置
-    *@param length 字符串长度
-    */
-    void on_response_status_code(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 编码块大小回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_response_chunk_size(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 版本回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_response_http_version(void *data, const char *at, size_t length);
-
-    /**
-    *@brief 头部解析完成回调函数
-    *@param data 用户数据
-    *@param at 字符串起始位置
-    *@param length 字符串长度
-    */
-    void on_response_header_done(void *data, const char *at, size_t length);
-
-    /**
-     *@brief 编码最后一个块回调函数
-     *@param data 用户数据
-     *@param at 字符串起始位置
-     *@param length 字符串长度
-     */
-    void on_response_last_chunk(void *data, const char *at, size_t length);
-
-
 private:
     /// http_parser
     http_parser m_parser;
@@ -309,6 +181,132 @@ private:
     /// 1002: invalid field
     int m_error;
 };
+
+/**
+    *@brief 处理 HTTP 请求头部字段的回调函数
+    *@param data 用户数据
+    *@param field 字段名起始位置
+    *@param flen 字段名长度
+    *@param value 字段值起始位置
+    *@param vlen 字段值长度
+    */
+void on_request_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen);
+
+/**
+ *@brief 处理 HTTP 请求方法的回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_request_method(void *data, const char *at, size_t length);
+
+/**
+ *@brief 处理 HTTP 请求 URI 的回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_request_uri(void *data, const char *at, size_t length);
+
+/**
+ *@brief 处理 HTTP URI 中的片段标识符的回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_request_fragment(void *data, const char *at, size_t length);
+
+/**
+ *@brief 处理 HTTP 请求路径的回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_request_path(void *data, const char *at, size_t length);
+
+/**
+ *@brief 处理 HTTP 查询字符串的回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_request_query_string(void *data, const char *at, size_t length);
+
+/**
+ *@brief 处理 HTTP 协议版本的回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_request_http_version(void *data, const char *at, size_t length);
+
+/**
+ *@brief 处理 HTTP 请求头部结束的回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_request_header_done(void *data, const char *at, size_t length);
+
+
+/**
+ *@brief 处理 HTTP 请求头部字段的回调函数
+ *@param data 用户数据
+ *@param field 字段名起始位置
+ *@param flen 字段名长度
+ *@param value 字段值起始位置
+ *@param vlen 字段值长度
+ */
+void on_response_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen);
+
+/**
+ *@brief 响应状态码原因短语回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_response_reason_phrase(void *data, const char *at, size_t length);
+
+/**
+*@brief 响应状态码回调函数
+*@param data 用户数据
+*@param at 字符串起始位置
+*@param length 字符串长度
+*/
+void on_response_status_code(void *data, const char *at, size_t length);
+
+/**
+ *@brief 编码块大小回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_response_chunk_size(void *data, const char *at, size_t length);
+
+/**
+ *@brief 版本回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_response_http_version(void *data, const char *at, size_t length);
+
+/**
+*@brief 头部解析完成回调函数
+*@param data 用户数据
+*@param at 字符串起始位置
+*@param length 字符串长度
+*/
+void on_response_header_done(void *data, const char *at, size_t length);
+
+/**
+ *@brief 编码最后一个块回调函数
+ *@param data 用户数据
+ *@param at 字符串起始位置
+ *@param length 字符串长度
+ */
+void on_response_last_chunk(void *data, const char *at, size_t length);
+
 
 } // hyn::http
 

@@ -15,6 +15,8 @@
 namespace hyn::http {
 HttpRequestParser::HttpRequestParser() : m_error(0) {
     m_data.reset(new hyn::http::HttpRequest);
+    http_parser_init(&m_parser);
+    m_parser.http_field = on_request_http_field;
 }
 
 size_t HttpRequestParser::execute(char *data, size_t len, bool chunck) {
@@ -42,35 +44,35 @@ uint64_t HttpRequestParser::GetHttpResponseMaxBodySize() {
 }
 
 void
-HttpRequestParser::on_request_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen) {
+on_request_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen) {
 
 }
 
-void HttpRequestParser::on_request_method(void *data, const char *at, size_t length) {
+void on_request_method(void *data, const char *at, size_t length) {
 
 }
 
-void HttpRequestParser::on_request_uri(void *data, const char *at, size_t length) {
+void on_request_uri(void *data, const char *at, size_t length) {
 
 }
 
-void HttpRequestParser::on_request_fragment(void *data, const char *at, size_t length) {
+void on_request_fragment(void *data, const char *at, size_t length) {
 
 }
 
-void HttpRequestParser::on_request_path(void *data, const char *at, size_t length) {
+void on_request_path(void *data, const char *at, size_t length) {
 
 }
 
-void HttpRequestParser::on_request_query_string(void *data, const char *at, size_t length) {
+void on_request_query_string(void *data, const char *at, size_t length) {
 
 }
 
-void HttpRequestParser::on_request_http_version(void *data, const char *at, size_t length) {
+void on_request_http_version(void *data, const char *at, size_t length) {
 
 }
 
-void HttpRequestParser::on_request_header_done(void *data, const char *at, size_t length) {
+void on_request_header_done(void *data, const char *at, size_t length) {
 
 }
 
@@ -103,31 +105,31 @@ uint64_t HttpResponseParser::GetHttpResponseMaxBodySize() {
 }
 
 void
-HttpResponseParser::on_response_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen) {
+on_response_http_field(void *data, const char *field, size_t flen, const char *value, size_t vlen) {
 
 }
 
-void HttpResponseParser::on_response_reason_phrase(void *data, const char *at, size_t length) {
+void on_response_reason_phrase(void *data, const char *at, size_t length) {
 
 }
 
-void HttpResponseParser::on_response_status_code(void *data, const char *at, size_t length) {
+void on_response_status_code(void *data, const char *at, size_t length) {
 
 }
 
-void HttpResponseParser::on_response_chunk_size(void *data, const char *at, size_t length) {
+void on_response_chunk_size(void *data, const char *at, size_t length) {
 
 }
 
-void HttpResponseParser::on_response_http_version(void *data, const char *at, size_t length) {
+void on_response_http_version(void *data, const char *at, size_t length) {
 
 }
 
-void HttpResponseParser::on_response_header_done(void *data, const char *at, size_t length) {
+void on_response_header_done(void *data, const char *at, size_t length) {
 
 }
 
-void HttpResponseParser::on_response_last_chunk(void *data, const char *at, size_t length) {
+void on_response_last_chunk(void *data, const char *at, size_t length) {
 
 }
 } // hyn
