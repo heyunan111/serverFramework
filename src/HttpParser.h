@@ -56,12 +56,12 @@ public:
     /**
      * @brief 返回HTTP响应解析缓存大小
      */
-    static uint64_t GetHttpResponseBufferSize();
+    static uint64_t GetHttpRequestBufferSize();
 
     /**
      * @brief 返回HTTP响应最大消息体大小
      */
-    static uint64_t GetHttpResponseMaxBodySize();
+    static uint64_t GetHttpRequestMaxBodySize();
 
     /***************** getter and setter *****************/
     [[nodiscard]] const http_parser &getParser() const {
@@ -90,7 +90,7 @@ public:
 
 private:
     /// http_parser
-    http_parser m_parser;
+    http_parser m_parser{};
     /// HttpRequest结构
     HttpRequest::ptr m_data;
     /// 错误码
@@ -147,11 +147,11 @@ public:
     static uint64_t GetHttpResponseMaxBodySize();
 
     /***************** getter and setter *****************/
-    [[nodiscard]] const http_parser &getParser() const {
+    [[nodiscard]] const httpclient_parser &getParser() const {
         return m_parser;
     }
 
-    void setParser(const http_parser &mParser) {
+    void setParser(const httpclient_parser &mParser) {
         m_parser = mParser;
     }
 
@@ -172,7 +172,7 @@ public:
     }
 private:
     /// http_parser
-    http_parser m_parser;
+    httpclient_parser m_parser{};
     /// HttpRequest结构
     HttpResponse::ptr m_data;
     /// 错误码

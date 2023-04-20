@@ -198,12 +198,12 @@ struct CaseInsensitiveLess {
  * @return 如果存在且转换成功返回对应的值,否则返回默认值
  */
 template<typename T, typename MapType>
-bool getAs(const MapType &m, const std::string &key, const T &def = T()) {
+T getAs(const MapType &m, const std::string &key, const T &def = T()) {
     auto it = m.find(key);
     if (it == m.end())
         return def;
     try {
-        return boost::lexical_cast<T>(it->second());
+        return boost::lexical_cast<T>(it->second);
     } catch (...) {
     }
     return def;
@@ -351,6 +351,18 @@ public:
     template<typename T>
     bool checkGetHeaderAs(const std::string &key, T &value, const T &def = T()) {
         return checkGetAs(m_headers, key, value, def);
+    }
+
+    /**
+    * @brief 获取HTTP请求的头部参数
+    * @tparam T 转换类型
+    * @param[in] key 关键字
+    * @param[in] def 默认值
+    * @return 如果存在且转换成功返回对应的值,否则返回def
+    */
+    template<class T>
+    T getHeaderAs(const std::string &key, const T &def = T()) {
+        return getAs(m_headers, key, def);
     }
 
     /**
