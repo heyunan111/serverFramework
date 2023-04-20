@@ -36,7 +36,7 @@ public:
      * @param[in] chunck 是否在解析chunck
      * @return 返回实际解析的长度,并且移除已解析的数据
      */
-    size_t execute(char *data, size_t len, bool chunck);
+    size_t execute(char *data, size_t len);
 
     /**
      * @brief 是否解析完成

@@ -26,7 +26,11 @@ static uint64_t s_http_response_max_body_size = 0;
 
 struct RequestSizeIniter {
     RequestSizeIniter() {
-        ///FIXME:ini配置
+        ///TODO:ini配置
+        s_http_request_buffer_size = (uint64_t) (4 * 1024);
+        s_http_request_max_body_size = (uint64_t) (64 * 1024 * 1024);
+        s_http_response_buffer_size = (uint64_t) (4 * 1024);
+        s_http_response_max_body_size = (uint64_t) (64 * 1024 * 1024);
     }
 };
 
@@ -47,7 +51,7 @@ HttpRequestParser::HttpRequestParser() : m_error(0) {
 }
 
 
-size_t HttpRequestParser::execute(char *data, size_t len, bool chunck) {
+size_t HttpRequestParser::execute(char *data, size_t len) {
     //http_parser_execute函数返回一个size_t类型的值，表示解析器实际处理的数据长度。在函数内部，该值被保存在offset变量中。
     size_t offset = http_parser_execute(&m_parser, data, len, 0);
 
@@ -117,7 +121,7 @@ void on_request_query_string(void *data, const char *at, size_t length) {
 
 void on_request_http_version(void *data, const char *at, size_t length) {
     auto *parser = static_cast<HttpRequestParser *>(data);
-    uint8_t v = 0;
+    uint8_t v;
     if (strncmp(at, "HTTP/1.1", length) == 0) {
         v = 0x11;
     } else if (strncmp(at, "HTTP/1.0", length) == 0) {
@@ -204,7 +208,7 @@ void on_response_chunk_size(void *data, const char *at, size_t length) {
 
 void on_response_http_version(void *data, const char *at, size_t length) {
     auto *parser = static_cast<HttpResponseParser *>(data);
-    uint8_t v = 0;
+    uint8_t v;
     if (strncmp(at, "HTTP/1.1", length) == 0) {
         v = 0x11;
     } else if (strncmp(at, "HTTP/1.0", length) == 0) {

@@ -17,7 +17,7 @@ add_executable(serverFramework main.cpp src/_Singleton.h src/Address.cpp src/Add
         src/HttpParser.h
 
         test/test_fiber.h test/test_hook.h test/test_iomanager.h test/test_scheduler.h test/thread_test.h test/util_test.h
-        test/test_address.h test/test_Socket.h test/test_bytesArray.h test/test_http.h
+        test/test_address.h test/test_Socket.h test/test_bytesArray.h test/test_http.h test/test_parser.h
 
         hyn.h main.cpp)
 
