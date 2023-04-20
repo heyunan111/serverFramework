@@ -165,8 +165,9 @@ void hook_init() {
 
 struct HookIniter {
     HookIniter() {
-        ///FIXME :ini配置
         hook_init();
+        int a = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("TCP", "timeout");
+        s_connect_timeout = static_cast<uint64_t>(a);
     }
 };
 

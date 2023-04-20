@@ -2,6 +2,7 @@
 
 #include<string>
 #include <map>
+#include "singleton.h"
 
 namespace hyn::ini {
 
@@ -46,6 +47,7 @@ private:
 
 
 class IniFile {
+    friend hyn::singleton::Singleton<hyn::ini::IniFile>;
 public:
     IniFile() = default;
 

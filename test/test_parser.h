@@ -47,13 +47,13 @@ char test_response_data[] = "HTTP/1.1 200 OK\r\n"
                             "</html>\r\n";
 
 void test_response_parser() {
-    hyn::http::HttpResponseParser::ptr parser;
+    hyn::http::HttpResponseParser parser;
     std::string tmp = test_response_data;
-    size_t s = parser->execute(&tmp[0], tmp.size(), true);
-    info("execute rt = %d,has_error = %d,is_finished = %d,ContentLength = %d", s, parser->hasError(),
-         parser->isFinished(), parser->getContentLength());
+    size_t s = parser.execute(&tmp[0], tmp.size(), true);
+    info("execute rt = %d,has_error = %d,is_finished = %d,ContentLength = %d", s, parser.hasError(),
+         parser.isFinished(), parser.getContentLength());
     tmp.resize(tmp.size() - s);
-    info("%s", parser->getData()->toString().c_str());
+    info("%s", parser.getData()->toString().c_str());
     info("%s", tmp.c_str());
 }
 

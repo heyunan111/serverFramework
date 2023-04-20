@@ -11,7 +11,7 @@
 
 #include "Logger.h"
 #include "HttpParser.h"
-
+#include "iniFile.h"
 namespace hyn::http {
 
 ///限制HTTP请求的缓冲区大小
@@ -26,11 +26,14 @@ static uint64_t s_http_response_max_body_size = 0;
 
 struct RequestSizeIniter {
     RequestSizeIniter() {
-        ///TODO:ini配置
-        s_http_request_buffer_size = (uint64_t) (4 * 1024);
-        s_http_request_max_body_size = (uint64_t) (64 * 1024 * 1024);
-        s_http_response_buffer_size = (uint64_t) (4 * 1024);
-        s_http_response_max_body_size = (uint64_t) (64 * 1024 * 1024);
+        int a = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "request_buffer_size");
+        s_http_request_buffer_size = static_cast<uint64_t>(a);
+        int b = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "request_max_body_size");
+        s_http_request_max_body_size = static_cast<uint64_t>(b);
+        int c = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "response_buffer_size");
+        s_http_response_buffer_size = static_cast<uint64_t>(c);
+        int d = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "response_max_body_size");
+        s_http_response_max_body_size = static_cast<uint64_t>(d);
     }
 };
 

@@ -59,7 +59,7 @@ HttpRequest::HttpRequest(uint8_t version, bool close) : m_autoClose(close), m_is
 }
 
 std::shared_ptr<HttpRequest> HttpRequest::creatResponse() {
-    ///FIXME
+    HttpResponse::ptr rsp(new HttpResponse(getVersion(), isAutoClose()));
     return nullptr;
 }
 
