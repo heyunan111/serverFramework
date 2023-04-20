@@ -52,5 +52,6 @@ HttpResponse
 > content-length: 11  
 > hello world
 
-Ragel 实现HTTP协议解析，基于状态机的编译器，生成高效的、可预测的代码，特别适合用于解析和生成具有特定格式的文本  
+Ragel 实现HTTP协议解析  
+Ragel:基于状态机的编译器，生成高效的、可预测的代码，特别适合用于解析和生成具有特定格式的文本  
 
