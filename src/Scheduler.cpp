@@ -258,10 +258,4 @@ void Scheduler::idle() {
         fiber::Fiber::YieldToHold();
     }
 }
-
-const std::string &Scheduler::getMName() const {
-    return m_name;
-}
-
-
 } // Scheduler

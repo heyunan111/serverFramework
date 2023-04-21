@@ -47,7 +47,6 @@ private:
 
 
 class IniFile {
-    friend hyn::singleton::Singleton<hyn::ini::IniFile>;
 public:
     IniFile() = default;
 

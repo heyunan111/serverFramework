@@ -20,6 +20,9 @@
 
 ## IO协程调度
 
+IOManager相当于线程池
+
+
 ---
 
 ## Socket

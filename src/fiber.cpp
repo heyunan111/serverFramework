@@ -86,9 +86,10 @@ hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_ca
                                                                                         m_state(INIT),
                                                                                         m_stack(nullptr) {
     ++s_fiber_count;
+    ///FIXME:config
     int stack_size = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("Fiber",
                                                                                        "stacks_size");
-    m_stacksize = stacksize ? stacksize : static_cast<uint32_t>(stack_size);
+    m_stacksize = stacksize ? stacksize : 131072;
     m_stack = StackAlloc::Alloc(m_stacksize);
     // 获取上下文对象的副本
     if (getcontext(&m_ctx)) {

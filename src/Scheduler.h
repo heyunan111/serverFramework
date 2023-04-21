@@ -215,10 +215,6 @@ private:
     std::list<Task> m_task_queue;
     ///协程调度器名称
     std::string m_name;
-public:
-    [[nodiscard]] const std::string &getMName() const;
-
-private:
     ///use_caller为true有效，调度协程
     fiber::Fiber::ptr m_root_fiber;
 };
