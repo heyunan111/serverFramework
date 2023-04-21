@@ -18,7 +18,7 @@ namespace hyn {
 TcpServer::TcpServer(IOManager *worker, IOManager *ioWorker, IOManager *acceptWorker) : m_worker(worker),
                                                                                         m_ioWorker(ioWorker),
                                                                                         m_acceptWorker(acceptWorker),
-                                                                                        m_recvTimeout(120000),
+                                                                                        m_recvTimeout(1200000),
                                                                                         m_name("/1.0.0"),
                                                                                         m_isStop(true) {}
 
@@ -39,7 +39,7 @@ bool TcpServer::bind(const Address::ptr &addr) {
         return false;
     }
     m_socks.emplace_back(sock);
-    info("type:%d,name:%s is bind success");
+    info("type:%s,name:%s is bind success", m_type.c_str(), m_name.c_str());
     return true;
 }
 
@@ -61,9 +61,7 @@ bool TcpServer::start() {
         return false;
     m_isStop = false;
     for (auto &i: m_socks) {
-        m_acceptWorker->schedule([this, &i]() {
-            startAccept(i);
-        });
+        m_acceptWorker->schedule([capture0 = shared_from_this(), i] { capture0->startAccept(i); });
     }
     return true;
 }
@@ -89,7 +87,7 @@ void TcpServer::startAccept(const Socket::ptr &sock) {
         Socket::ptr client = sock->accept();
         if (client) {
             client->setRecvTimeout(static_cast<int64_t>(m_recvTimeout));
-            m_ioWorker->schedule([this, &client]() { handleClient(client); });
+            m_ioWorker->schedule([capture0 = shared_from_this(), client] { capture0->handleClient(client); });
         } else {
             error("accept errno=%d,errstr=%s", errno, strerror(errno));
         }

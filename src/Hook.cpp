@@ -305,10 +305,11 @@ int connect(int fd, const struct sockaddr *addr, socklen_t addrlen) {
 }
 
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-    ssize_t fd = hyn::do_io(sockfd, accept_f, "accept", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, addr, addrlen);
-    if (fd >= 0)
-        hyn::FdMgr::GetInstance()->get(static_cast<int>(fd), true);
-    return static_cast<int>(fd);
+    int fd = hyn::do_io(sockfd, accept_f, "accept", hyn::iomanager::IOManager::READ, SO_RCVTIMEO, addr, addrlen);
+    if (fd >= 0) {
+        hyn::FdMgr::GetInstance()->get(fd, true);
+    }
+    return fd;
 }
 
 int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen) {

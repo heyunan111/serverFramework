@@ -32,8 +32,8 @@ namespace hyn::iomanager {
  *pipe[0] 读 pipe[1]写
  */
 IOManager::IOManager(size_t thread, bool use_call, const std::string &name) : Scheduler(thread, use_call, name) {
-    int epfd = epoll_create(5000);
-    THROW_RUNTIME_ERROR_IF(epfd < 0, "epoll create error");
+    m_epfd = epoll_create(5000);
+    THROW_RUNTIME_ERROR_IF(m_epfd < 0, "epoll create error");
 
     int rt = pipe(m_tickleFds);
     THROW_RUNTIME_ERROR_IF(rt, "pipe error");
@@ -45,7 +45,7 @@ IOManager::IOManager(size_t thread, bool use_call, const std::string &name) : Sc
     rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);//设置非阻塞
     THROW_RUNTIME_ERROR_IF(rt, "fcntl error");
 
-    rt = epoll_ctl(epfd, EPOLL_CTL_ADD, m_tickleFds[0], &ep_event);
+    rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &ep_event);
     THROW_RUNTIME_ERROR_IF(rt, "epoll ctl error");
 
     contextResize(32);
@@ -65,53 +65,47 @@ IOManager::~IOManager() {
 //首先通过文件描述符fd找到对应的FdContext，如果找到则加锁并将fd对应的事件添加到epoll事件循环中，如果未找到则先扩展
 //FdContext数组，再加锁后添加事件到epoll事件循环中。如果添加事件成功，将事件与回调函数绑定，以便在事件发生时回调。
 int IOManager::addEvent(int fd, IOManager::Event event, std::function<void()> cb) {
-    FdContext *fdContext = nullptr;
+    FdContext *fd_ctx = nullptr;
     RWMutexType::ReadLock lock(m_rw_mutex);
-
-    //通过文件描述符fd找到对应的FdContext，如果未找到则先扩展FdContext数组
-    if (static_cast<int>(m_fdContexts_vertor.size()) > fd) {
-        fdContext = m_fdContexts_vertor[fd];
+    if ((int) m_fdContexts_vertor.size() > fd) {
+        fd_ctx = m_fdContexts_vertor[fd];
         lock.unlock();
     } else {
         lock.unlock();
-        RWMutexType::WriteLock writeLock(m_rw_mutex);
-        contextResize(fd * 2);
-        fdContext = m_fdContexts_vertor[fd];
+        RWMutexType::WriteLock lock2(m_rw_mutex);
+        contextResize(fd * 1.5);
+        fd_ctx = m_fdContexts_vertor[fd];
     }
 
-    //锁定FdContext并检查要添加的事件是否已经存在。
-    FdContext::MutexType::Lock lock1(fdContext->mutex);
-
-    if (fdContext->m_event & event) {
+    FdContext::MutexType::Lock lock2(fd_ctx->mutex);
+    if (fd_ctx->m_event & event) {
         error("addEvent error fd :%d", fd);
-        assert(!(fdContext->m_event & event));
+        assert(!(fd_ctx->m_event & event));
     }
 
-    //添加事件到epoll事件循环中。
-    int op = fdContext->m_event ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
-    epoll_event epollEvent{};
-    epollEvent.events = EPOLLET | fdContext->m_event | event;
-    epollEvent.data.ptr = fdContext;
-    int rt = epoll_ctl(m_epfd, op, fd, &epollEvent);
+    int op = fd_ctx->m_event ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
+    epoll_event epevent{};
+    epevent.events = EPOLLET | fd_ctx->m_event | event;
+    epevent.data.ptr = fd_ctx;
 
-    if (rt) {
+    int rt = epoll_ctl(m_epfd, op, fd, &epevent);
+    if (rt != 0) {
         error(" error epoll_ctl :epfd:%d,op:%d,fd:%d,errno:%d", m_epfd, op, fd, errno);
         return -1;
     }
 
-    //绑定事件与回调函数。
     ++m_pendingEventCount;
-    fdContext->m_event = (Event) (fdContext->m_event | event);
-    FdContext::EventContext &event_ctx = fdContext->get_context(event);
+    fd_ctx->m_event = (Event) (fd_ctx->m_event | event);
+    FdContext::EventContext &event_ctx = fd_ctx->get_context(event);
     assert(event_ctx.scheduler == nullptr && !event_ctx.fiber && !event_ctx.cb);
-    event_ctx.scheduler = scheduler::Scheduler::GetThis();
+
+    event_ctx.scheduler = Scheduler::GetThis();
     if (cb) {
         event_ctx.cb.swap(cb);
     } else {
         event_ctx.fiber = fiber::Fiber::GetThis();
         assert(event_ctx.fiber->get_state() == fiber::Fiber::EXEC);
     }
-
     return 0;
 }
 
@@ -256,7 +250,7 @@ void IOManager::idle() {
     for (;;) {
         uint64_t next_timeout = 0;
         if (stopping(next_timeout)) {
-            info("name = %s idle stopping exit", getMName().c_str());
+            info("name = %s idle stopping exit", get_name().c_str());
             break;
         }
         int rt;

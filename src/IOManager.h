@@ -151,7 +151,7 @@ protected:
 
 private:
     ///epoll句柄
-    int m_epfd{0};
+    int m_epfd;
     ///pipe句柄
     int m_tickleFds[2]{};
     ///当前等待执行的事件数量

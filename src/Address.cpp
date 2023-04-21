@@ -152,7 +152,7 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     return !result.empty();
 }
 
-Address::ptr Address::LockupAny(const std::string &host, int family, int type, int protocol) {
+Address::ptr Address::LookupAny(const std::string &host, int family, int type, int protocol) {
     std::vector<Address::ptr> res;
     if (Address::Lookup(res, host, family, type, protocol))
         return res[0];

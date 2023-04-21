@@ -112,7 +112,7 @@ public:
      * @param[in] protocol 协议,IPPROTO_TCP、IPPROTO_UDP 等
      * @return 返回满足条件的任意Address,失败返回nullptr
      */
-    static ptr LockupAny(const std::string &host, int family = AF_INET, int type = 0, int protocol = 0);
+    static ptr LookupAny(const std::string &host, int family = AF_INET, int type = 0, int protocol = 0);
 
     /**
      * @brief 通过host地址返回对应条件的任意IPAddress

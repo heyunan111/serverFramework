@@ -115,7 +115,6 @@ Socket::ptr Socket::accept() {
     if (sock->init(newsock))
         return sock;
     return nullptr;
-
 }
 
 bool Socket::bind(const Address::ptr &addr) {
