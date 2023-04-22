@@ -375,7 +375,6 @@ public:
      */
     [[nodiscard]] std::string toString() const;
 
-private:
     /**
      *@brief 初始化是否keep-live
      */

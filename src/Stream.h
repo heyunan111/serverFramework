@@ -77,7 +77,7 @@ public:
      *          =0:被关闭
      *          <0:出现流错误
      */
-    virtual int write(void *buff, size_t len) = 0;
+    virtual int write(const void *buff, size_t len) = 0;
 
     /**
      *@brief 写数据
@@ -99,7 +99,7 @@ public:
     *          =0:被关闭
     *          <0:出现流错误
     */
-    virtual int writeFixSize(void *buff, size_t len);
+    virtual int writeFixSize(const void *buff, size_t len);
 
     /**
     *@brief 写固定大小数据

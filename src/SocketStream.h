@@ -65,7 +65,7 @@ public:
      *      @retval =0 socket被远端关闭
      *      @retval <0 socket错误
      */
-    int write(void *buffer, size_t length) override;
+    int write(const void *buffer, size_t length) override;
 
     /**
      * @brief 写入数据

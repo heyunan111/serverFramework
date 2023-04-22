@@ -38,11 +38,11 @@ int Stream::readFixSize(ByteArray::ptr ba, size_t len) {
     return (int) len;
 }
 
-int Stream::writeFixSize(void *buff, size_t len) {
+int Stream::writeFixSize(const void *buff, size_t len) {
     size_t offset = 0;
     auto left = static_cast<int64_t>(len);
     while (left > 0) {
-        int64_t length = write(static_cast<char *>(buff) + offset, left);
+        int64_t length = write(static_cast<const char *>(buff) + offset, left);
         if (length <= 0)
             return (int) length;
         offset += length;

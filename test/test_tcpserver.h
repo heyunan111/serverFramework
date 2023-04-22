@@ -31,5 +31,8 @@ void run() {
     tcp_server->start();
 }
 
+void test_tcpser() {
+
+}
 
 #endif //SERVERFRAMEWORK_TEST_TCPSERVER_H
