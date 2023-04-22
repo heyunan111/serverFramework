@@ -13,24 +13,26 @@
 #ifndef SERVERFRAMEWORK_THREAD_TEST_H
 #define SERVERFRAMEWORK_THREAD_TEST_H
 
-#include "../hyn.h"
+#include "../src/Logger.h"
+#include "../src/thread.h"
 
 #include <vector>
 #include <iostream>
-void fun1(){
+
+void fun1() {
     std::cout << hyn::thread::Thread::GetName() << "  ";
     std::cout << hyn::thread::Thread::GetThis()->get_name() << "四代巨大的 ";
     std::cout << hyn::thread::Thread::GetThis()->get_id();
-    error("name: %s",hyn::thread::Thread::GetThis()->get_name().c_str());
-    std::cout<<'\n';
+    error("name: %s", hyn::thread::Thread::GetThis()->get_name().c_str());
+    std::cout << '\n';
     sleep(5);
 }
 
-void fun2(){
+void fun2() {
 
 }
 
-void test_thread(){
+void test_thread() {
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test.log");
     std::vector<hyn::thread::Thread::ptr> thrs;
     for (int i = 0; i < 5; ++i) {

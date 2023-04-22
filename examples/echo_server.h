@@ -10,10 +10,11 @@
 
 
 
-#ifndef SERVERFRAMEWORK_ECHO_SERVER_H
-#define SERVERFRAMEWORK_ECHO_SERVER_H
+#pragma once
 
-#include "../hyn.h"
+#include "../src/Logger.h"
+#include "../src/TcpServer.h"
+#include "../src/ByteArray.h"
 
 using namespace hyn;
 
@@ -84,4 +85,4 @@ void test(const std::string &arg) {
     iom.schedule(run);
 }
 
-#endif //SERVERFRAMEWORK_ECHO_SERVER_H
+

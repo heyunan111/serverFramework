@@ -13,7 +13,10 @@
 #ifndef SERVERFRAMEWORK_TEST_SOCKET_H
 #define SERVERFRAMEWORK_TEST_SOCKET_H
 
-#include "../hyn.h"
+#include "../src/Logger.h"
+#include "../src/Address.h"
+#include "../src/IOManager.h"
+#include "../src/Socket.h"
 
 using namespace hyn;
 

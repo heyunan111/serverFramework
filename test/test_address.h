@@ -12,8 +12,9 @@
 
 #pragma once
 
-#include "../hyn.h"
 #include <vector>
+#include "../src/Address.h"
+#include "../src/Logger.h"
 
 void test() {
     std::vector<hyn::Address::ptr> addrss;

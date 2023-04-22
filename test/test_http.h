@@ -13,6 +13,10 @@
 #ifndef SERVERFRAMEWORK_TEST_HTTP_H
 #define SERVERFRAMEWORK_TEST_HTTP_H
 
+#include <iostream>
+#include "../src/Logger.h"
+#include "../src/Http.h"
+
 void test_req() {
     hyn::http::HttpRequest::ptr req(new hyn::http::HttpRequest);
     req->setHeader("host", "www.qq.com");

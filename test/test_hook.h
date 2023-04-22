@@ -13,8 +13,10 @@
 #ifndef SERVERFRAMEWORK_TEST_HOOK_H
 #define SERVERFRAMEWORK_TEST_HOOK_H
 
+#include "../src/Logger.h"
+#include "../src/IOManager.h"
+
 #include <string>
-#include "../hyn.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>

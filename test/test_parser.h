@@ -13,7 +13,8 @@
 #ifndef SERVERFRAMEWORK_TEST_PARSER_H
 #define SERVERFRAMEWORK_TEST_PARSER_H
 
-#include "../hyn.h"
+#include "../src/Logger.h"
+#include "../src/HttpParser.h"
 
 char test_request_data[] = "GET / HTTP/1.1\r\n"
                            "Host: www.qq.com\r\n"

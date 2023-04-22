@@ -13,7 +13,8 @@
 #ifndef SERVERFRAMEWORK_TEST_SCHEDULER_H
 #define SERVERFRAMEWORK_TEST_SCHEDULER_H
 
-#include "../hyn.h"
+#include "../src/Logger.h"
+#include "../src/Scheduler.h"
 #include <iostream>
 
 void t_fiber() {

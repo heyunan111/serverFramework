@@ -14,7 +14,8 @@
 #define SERVERFRAMEWORK_TEST_BYTESARRAY_H
 
 #include <random>
-#include "../hyn.h"
+#include "../src/ByteArray.h"
+#include "../src/Logger.h"
 
 void test_bytearrya() {
 

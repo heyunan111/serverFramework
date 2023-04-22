@@ -14,7 +14,7 @@
 #define SERVERFRAMEWORK_TEST_IOMANAGER_H
 
 #include "../src/IOManager.h"
-#include "../hyn.h"
+#include "../src/Logger.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <fcntl.h>

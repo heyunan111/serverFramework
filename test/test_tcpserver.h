@@ -15,7 +15,9 @@
 
 #include <memory>
 
-#include "../hyn.h"
+#include "../src/Logger.h"
+#include "../src/Address.h"
+#include "../src/TcpServer.h"
 
 void run() {
     auto addr1 = hyn::IPAddress::LookupAny("0.0.0.0:8033");
