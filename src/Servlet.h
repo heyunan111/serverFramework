@@ -266,7 +266,7 @@ public:
     void listAllGlobServletCreator(std::map<std::string, IServletCreator::ptr> &infos);
 
 private:
-    RWMutexType m_mutex{};
+    RWMutexType m_mutex;
     ///存储 URL 路径与 IServletCreator 对象之间的映射关系
     std::unordered_map<std::string, IServletCreator::ptr> m_datas;
     ///存储全局的 URL 路径与 IServletCreator 对象之间的映射关系(支持通配符*)

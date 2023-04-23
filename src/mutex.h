@@ -17,6 +17,8 @@
 #include <semaphore>
 #include <atomic>
 
+#include "Logger.h"
+
 namespace hyn::mutex {
 
 /**
@@ -211,7 +213,9 @@ public:
 
 
     RWMutex() {
-        pthread_rwlock_init(&m_lock, nullptr);
+        if (pthread_rwlock_init(&m_lock, nullptr) != 0)
+            error("RWMutex() error");
+
     }
 
 
