@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 #include <sys/time.h>
+#include <cxxabi.h>
 
 namespace hyn::util {
 pid_t GetThreadId();
@@ -27,4 +28,11 @@ std::string backtrace_to_string(int size = 64, int skip = 2, const std::string &
 uint64_t GetCurrentMS();
 
 uint64_t GetCurrentUS();
+
+///返回类型名称
+template<class T>
+const char *TypeToName() {
+    static const char *s_name = abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
+    return s_name;
+}
 }

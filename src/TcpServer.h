@@ -27,8 +27,8 @@ public:
     /**
      *@brief 构造函数
      *@param  worker socket客户端工作的协程调度器
+     *@param ioWorker 工作调度器
      *@param acceptWorker 服务器socket执行接收socket连接的协程调度器
-     *@param ioWorker
      */
     explicit TcpServer(IOManager *worker = IOManager::GetThis(), IOManager *ioWorker = IOManager::GetThis(),
                        IOManager *acceptWorker = IOManager::GetThis());
@@ -103,7 +103,7 @@ public:
         return m_name;
     }
 
-    void setName(const std::string &mName) {
+    virtual void setName(const std::string &mName) {
         m_name = mName;
     }
 
