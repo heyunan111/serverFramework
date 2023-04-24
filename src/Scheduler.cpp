@@ -51,16 +51,17 @@ Scheduler::~Scheduler() {
 }
 
 void Scheduler::start() {
-    debug("scheduler start");
+    //debug("scheduler start");
     mutexType::Lock lock(m_mutex);
     if (!m_stopping) {
         return;
     }
     m_stopping = false;
     assert(m_thread_pool.empty());
+
     m_thread_pool.resize(m_thread_count);
-    for (int i = 0; i < m_thread_count; ++i) {
-        m_thread_pool[i].reset(new thread::Thread([this] { run(); }, m_name + '_' + std::to_string(i)));
+    for (size_t i = 0; i < m_thread_count; ++i) {
+        m_thread_pool[i].reset(new thread::Thread([this] { run(); }, m_name + "_" + std::to_string(i)));
         m_thread_id_vector.push_back(m_thread_pool[i]->get_id());
     }
     lock.unlock();

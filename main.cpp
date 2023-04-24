@@ -16,38 +16,39 @@
 #include "src/Hook.h"
 
 
-//#include "test/test_http_connection.h"
-#include "test/test_Socket.h"
+#include "test/test_http_connection.h"
+//#include "test/test_Socket.h"
+
 
 using namespace std;
 
 int main() {
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test_log.log");
     //test();
-    test_sososs();
-
-
-//    int sockfd;
-//    struct sockaddr_in server_addr;
-//
-//    // 创建socket
-//    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-//    if (sockfd == -1) {
-//        perror("socket");
-//        return -1;
-//    }
-//
-//    // 设置server_addr结构体
-//    server_addr.sin_family = AF_INET;
-//    server_addr.sin_port = htons(80);
-//    server_addr.sin_addr.s_addr = inet_addr("36.152.44.95");
-//    bzero(&(server_addr.sin_zero), 8);
-//
-//    // 连接到服务器
-//    if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(struct sockaddr)) == -1) {
-//        perror("connect");
-//        close(sockfd);
-//        return -1;
-//    }
+    //test_sososs();
+    Address::ptr addr = Address::LookupAnyIPAddress("www.qq.com:80");
+    if (!addr) {
+        error("get addr error");
+        return -1;
+    }
+    info("%s", addr->toString().c_str());
+    Socket::ptr sock = Socket::CreateTCP(addr);
+    info("%s", sock->toString().c_str());
+    bool rt = sock->connect(addr);
+    if (!rt) {
+        error("connect error");
+        return -1;
+    }
+    HttpConnection::ptr conn(new HttpConnection(sock));
+    HttpRequest::ptr req(new HttpRequest);
+    req->setPath("/blog/");
+    req->setHeader("host", "www.qq.com");
+    info("req:%s", req->toString().c_str());
+    auto rsp = conn->recvResponse();
+    if (!rsp) {
+        error("recvResponse error");
+        return -1;
+    }
+    info("rsp:%s", rsp->toString().c_str());
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
 }

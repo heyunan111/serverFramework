@@ -15,7 +15,7 @@
 #include "Hook.h"
 namespace hyn {
 Socket::ptr Socket::CreateTCP(const Address::ptr &address) {
-    Socket::ptr socket1(new Socket(address->getFamily(), static_cast<int>(Type::TCP), 0));
+    Socket::ptr socket1(new Socket(address->getFamily(), TCP, 0));
     return socket1;
 }
 
@@ -23,43 +23,43 @@ Socket::ptr Socket::CreateTCP(const Address::ptr &address) {
  *而TCP是有连接的协议，创建套接字的过程已经包含在了连接的过程中，所以不需要调用newSock()函数。*/
 
 Socket::ptr Socket::CreateUDP(const Address::ptr &address) {
-    Socket::ptr socket1(new Socket(address->getFamily(), static_cast<int>(Type::UDP), 0));
+    Socket::ptr socket1(new Socket(address->getFamily(), UDP, 0));
     socket1->newSock();
     socket1->m_isConnected = true;
     return socket1;
 }
 
 Socket::ptr Socket::CreateTCPSocket4() {
-    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv4), static_cast<int>(Type::TCP), 0));
+    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv4), TCP, 0));
     return socket1;
 }
 
 Socket::ptr Socket::CreateUDPSocket4() {
-    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv4), static_cast<int>(Type::UDP), 0));
+    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv4), UDP, 0));
     socket1->newSock();
     socket1->m_isConnected = true;
     return socket1;
 }
 
 Socket::ptr Socket::CreateTCPSocket6() {
-    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv6), static_cast<int>(Type::TCP), 0));
+    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv6), TCP, 0));
     return socket1;
 }
 
 Socket::ptr Socket::CreateUDPSocket6() {
-    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv6), static_cast<int>(Type::UDP), 0));
+    Socket::ptr socket1(new Socket(static_cast<int>(Family::IPv6), UDP, 0));
     socket1->newSock();
     socket1->m_isConnected = true;
     return socket1;
 }
 
 Socket::ptr Socket::CreateUnixTCPSocket() {
-    Socket::ptr socket1(new Socket(static_cast<int>(Family::UNIX), static_cast<int>(Type::TCP), 0));
+    Socket::ptr socket1(new Socket(static_cast<int>(Family::UNIX), TCP, 0));
     return socket1;
 }
 
 Socket::ptr Socket::CreateUnixUDPSocket() {
-    Socket::ptr socket1(new Socket(static_cast<int>(Family::UNIX), static_cast<int>(Type::UDP), 0));
+    Socket::ptr socket1(new Socket(static_cast<int>(Family::UNIX), UDP, 0));
     return socket1;
 }
 
@@ -132,6 +132,7 @@ bool Socket::bind(const Address::ptr &addr) {
     }
 
     ///FIXME :Unix
+
 
     // 如果调用bind函数失败，则返回false，否则调用getLocalAddress方法获取本地地址，返回true。
     if (::bind(m_sock, addr->getAddr(), addr->getAddrLen())) {

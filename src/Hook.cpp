@@ -246,7 +246,6 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
     // 调用conn如果连接成功，则返回0；       EINPROGRESS是一个系统错误码，表示一个非阻塞的套接字正在进行连接操作，因此连接操作正在进行中（in progress），不是阻塞的。
     //如果连接出错且错误不是EINPROGRESS，则返回错误代码；
     int n = connect_f(fd, addr, addrlen);
-
     if (n == 0) {
         return 0;
     } else if (n != -1 || errno != EINPROGRESS) {

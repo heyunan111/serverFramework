@@ -39,6 +39,7 @@ IOManager::IOManager(size_t thread, bool use_call, const std::string &name) : Sc
     THROW_RUNTIME_ERROR_IF(rt, "pipe error");
 
     epoll_event ep_event{};
+    memset(&ep_event, 0, sizeof(epoll_event));
     ep_event.events = EPOLLIN | EPOLLET;
     ep_event.data.fd = m_tickleFds[0];
 
@@ -332,7 +333,7 @@ void IOManager::idle() {
 
 void IOManager::contextResize(size_t size) {
     m_fdContexts_vertor.resize(size);
-    for (int i = 0; i < size; ++i) {
+    for (int i = 0; i < m_fdContexts_vertor.size(); ++i) {
         if (!m_fdContexts_vertor[i]) {
             m_fdContexts_vertor[i] = new FdContext;
             m_fdContexts_vertor[i]->m_fd = i;

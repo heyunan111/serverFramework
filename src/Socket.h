@@ -20,7 +20,7 @@
 
 namespace hyn {
 
-class Socket : public boost::noncopyable {
+class Socket : public boost::noncopyable, std::enable_shared_from_this<Socket> {
 public:
     using ptr = std::shared_ptr<Socket>;
     using weak_ptr = std::weak_ptr<Socket>;
@@ -28,7 +28,7 @@ public:
     /**
      *@brief Socket类型
      */
-    enum class Type {
+    enum Type {
         ///TCP类型
         TCP = SOCK_STREAM,
         ///UDP类型
@@ -38,7 +38,7 @@ public:
     /**
      *@brief Socket协议簇
      */
-    enum class Family {
+    enum Family {
         IPv4 = AF_INET,
         IPv6 = AF_INET6,
         UNIX = AF_UNIX
@@ -92,7 +92,8 @@ public:
      * @param[in] type 类型
      * @param[in] protocol 协议
      */
-    Socket(int family, int type, int protocol = 0) : m_family(family), m_type(type), m_protocol(protocol) {}
+    Socket(int family, int type, int protocol = 0) : m_sock(-1), m_family(family), m_type(type), m_protocol(protocol),
+                                                     m_isConnected(false) {}
 
     /**
      * @brief 析构函数

@@ -32,8 +32,10 @@ void test_socket() {
     Socket::ptr sock = Socket::CreateTCP(addr);
     addr->setPort(80);
     info("%s", addr->toString().c_str());
+    info("%s", sock->toString().c_str());
     if (!sock->connect(addr)) {
         info("connect %s fail", addr->toString().c_str());
+        return;
     } else {
         info("connect %s connect", addr->toString().c_str());
     }
