@@ -13,6 +13,7 @@
 #include "Servlet.h"
 
 #include <utility>
+#include <fnmatch.h>
 
 namespace hyn {
 FunctionServlet::FunctionServlet(FunctionServlet::callback cb) : Servlet("FunctionServlet"), m_cb(std::move(cb)) {
@@ -123,12 +124,15 @@ Servlet::ptr ServletDispatch::getGlobServlet(const std::string &uri) {
 
 Servlet::ptr ServletDispatch::getMatchedServlet(const std::string &uri) {
     RWMutexType::ReadLock lock(m_mutex);
-    auto res = getServlet(uri);
-    if (res != nullptr)
-        return res;
-    res = getGlobServlet(uri);
-    if (res != nullptr)
-        return res;
+    auto mit = m_datas.find(uri);
+    if (mit != m_datas.end()) {
+        return mit->second->get();
+    }
+    for (auto &m_glob: m_globs) {
+        if (!fnmatch(m_glob.first.c_str(), uri.c_str(), 0)) {
+            return m_glob.second->get();
+        }
+    }
     return m_default;
 }
 

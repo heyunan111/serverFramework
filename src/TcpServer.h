@@ -74,7 +74,6 @@ protected:
 
     virtual std::string toString(const std::string &prefix = "");
 
-private:
     ///新连接的socket工作的调度器
     iomanager::IOManager *m_worker;
     iomanager::IOManager *m_ioWorker;

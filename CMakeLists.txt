@@ -23,7 +23,7 @@ add_executable(serverFramework main.cpp src/_Singleton.h src/Address.cpp src/Add
 
         examples/echo_server.h
 
-        main.cpp)
+        main.cpp src/HttpConnection.cpp src/HttpConnection.h)
 
 target_link_libraries(serverFramework ${SOURCE_FILES})
 target_link_libraries(serverFramework PRIVATE OpenSSL::SSL OpenSSL::Crypto)

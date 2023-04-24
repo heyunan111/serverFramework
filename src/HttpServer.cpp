@@ -15,7 +15,14 @@
 
 namespace hyn {
 HttpServer::HttpServer(bool keepalive, IOManager *worker, IOManager *ioWorker, IOManager *acceptWorker) : TcpServer(
-        worker, ioWorker, acceptWorker), m_isKeepalive(keepalive) {}
+        worker, ioWorker, acceptWorker), m_isKeepalive(keepalive) {
+    m_dispatch.reset(new ServletDispatch);
+
+    m_type = "http";
+    ///FIXME
+    //m_dispatch->addServlet("/_/status", Servlet::ptr(new StatusServlet));
+    //m_dispatch->addServlet("/_/config", Servlet::ptr(new ConfigServlet));
+}
 
 void HttpServer::setName(const std::string &mName) {
     TcpServer::setName(mName);
