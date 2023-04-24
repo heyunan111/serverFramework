@@ -40,7 +40,7 @@ public:
      * @brief 发送HTTP请求
      * @param[in] req HTTP请求结构
      */
-    int sendRequest(http::HttpRequest::ptr req);
+    int sendRequest(const http::HttpRequest::ptr &req);
 
 private:
     ///创建时间

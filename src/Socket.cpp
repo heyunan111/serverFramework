@@ -143,6 +143,7 @@ bool Socket::bind(const Address::ptr &addr) {
 }
 
 bool Socket::connect(const Address::ptr &addr, uint64_t timeout_ms) {
+    m_remoteAddress = addr;
     //函数首先检查套接字是否有效，然后检查要连接的地址的协议族是否与套接字的协议族匹配。
     if (!isValid()) {
         newSock();

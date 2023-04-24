@@ -7,6 +7,8 @@
   * @date           : 2023/4/10
   ******************************************************************************
   */
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "Hook.h"
 #include "fiber.h"
 #include "IOManager.h"
@@ -138,7 +140,7 @@ do_io(int fd, OriginFun func, const char *hook_fun_name, iomanager::IOManager::E
 }//namespace hyn
 
 extern "C" {
-#define XX(name) name##_fun name##_f = nullptr;
+#define XX(name) name ## _fun name ## _f = nullptr;
 HOOK_FUN(XX)
 #undef XX
 }
