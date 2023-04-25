@@ -16,8 +16,11 @@
 #include <semaphore.h>
 #include <semaphore>
 #include <atomic>
+#include <list>
 
 #include "Logger.h"
+#include "fiber.h"
+#include "Scheduler.h"
 
 namespace hyn::mutex {
 
@@ -27,7 +30,7 @@ namespace hyn::mutex {
 */
 class Semaphore : boost::noncopyable {
 public:
-    /*
+    /**
      *@作用：构造函数
      *@参数：信号值的大小
      *@返回值：null
@@ -36,14 +39,14 @@ public:
 
     ~Semaphore();
 
-    /*
+    /**
      *@作用：获取信号量
      *@参数：null
      *@返回值：null
      */
     void wait();
 
-    /*
+    /**
      *@作用：释放信号量
      *@参数：null
      *@返回值：null
@@ -54,6 +57,9 @@ private:
     sem_t m_semaphore{};
 };
 
+/**
+ * @brief 局部锁的模板实现
+ */
 template<class T>
 struct ScopedLockImpl {
 public:
@@ -64,7 +70,9 @@ public:
         m_locked = true;
     }
 
-
+    /**
+     * @brief 析构函数,自动释放锁
+     */
     ~ScopedLockImpl() {
         unlock();
     }
@@ -85,12 +93,14 @@ public:
     }
 
 private:
+    /// mutex
     T &m_mutex;
+    /// 是否已上锁
     bool m_locked;
 };
 
-/*
- *@作用：读锁
+/**
+ *@作用：局部读锁模板实现
  *@参数：null
  *@返回值：null
  */
@@ -98,6 +108,10 @@ template<class T>
 struct ReadScopedLockImpl {
 public:
 
+    /**
+     * @brief 构造函数
+     * @param[in] mutex 读写锁
+     */
     explicit ReadScopedLockImpl(T &mutex)
             : m_mutex(mutex) {
         m_mutex.rdlock();
@@ -129,10 +143,8 @@ private:
     bool m_locked;
 };
 
-/*
- *@作用：写锁
- *@参数：null
- *@返回值：null
+/**
+ * @brief 局部写锁模板实现
  */
 template<class T>
 struct WriteScopedLockImpl {
@@ -170,9 +182,12 @@ private:
     bool m_locked;
 };
 
-
+/**
+ * @brief 互斥量
+ */
 class Mutex : boost::noncopyable {
 public:
+    /// 局部锁
     typedef ScopedLockImpl<Mutex> Lock;
 
 
@@ -198,10 +213,8 @@ private:
     pthread_mutex_t m_mutex{};
 };
 
-/*
- *@作用：读写互斥量
- *@参数：null
- *@返回值：null
+/**
+ * @brief 读写互斥量
  */
 class RWMutex : boost::noncopyable {
 public:
@@ -213,9 +226,7 @@ public:
 
 
     RWMutex() {
-        if (pthread_rwlock_init(&m_lock, nullptr) != 0)
-            error("RWMutex() error");
-
+        pthread_rwlock_init(&m_lock, nullptr);
     }
 
 
@@ -238,4 +249,110 @@ public:
 private:
     pthread_rwlock_t m_lock{};
 };
+
+/**
+ * @brief 自旋锁
+ */
+class Spinlock : boost::noncopyable {
+public:
+    /// 局部锁
+    typedef ScopedLockImpl<Spinlock> Lock;
+
+    /**
+     * @brief 构造函数
+     */
+    Spinlock() {
+        pthread_spin_init(&m_mutex, 0);
+    }
+
+    /**
+     * @brief 析构函数
+     */
+    ~Spinlock() {
+        pthread_spin_destroy(&m_mutex);
+    }
+
+    /**
+     * @brief 上锁
+     */
+    void lock() {
+        pthread_spin_lock(&m_mutex);
+    }
+
+    /**
+     * @brief 解锁
+     */
+    void unlock() {
+        pthread_spin_unlock(&m_mutex);
+    }
+
+private:
+    /// 自旋锁
+    pthread_spinlock_t m_mutex;
+};
+
+/**
+ * @brief 原子锁
+ */
+class CASLock : boost::noncopyable {
+public:
+    /// 局部锁
+    typedef ScopedLockImpl<CASLock> Lock;
+
+    /**
+     * @brief 构造函数
+     */
+    CASLock() {
+        m_mutex.clear();
+    }
+
+    /**
+     * @brief 析构函数
+     */
+    ~CASLock() {
+    }
+
+    /**
+     * @brief 上锁
+     */
+    void lock() {
+        while (std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire));
+    }
+
+    /**
+     * @brief 解锁
+     */
+    void unlock() {
+        std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release);
+    }
+
+private:
+    /// 原子状态
+    volatile std::atomic_flag m_mutex;
+};
+
+class FiberSemaphore : boost::noncopyable {
+public:
+    typedef Spinlock MutexType;
+
+    explicit FiberSemaphore(size_t initial_concurrency = 0);
+
+    ~FiberSemaphore();
+
+    bool tryWait();
+
+    void wait();
+
+    void notify();
+
+    [[nodiscard]] size_t getConcurrency() const { return m_concurrency; }
+
+    void reset() { m_concurrency = 0; }
+
+private:
+    MutexType m_mutex;
+    std::list<std::pair<hyn::scheduler::Scheduler *, hyn::fiber::Fiber::ptr> > m_waiters;
+    size_t m_concurrency;
+};
+
 }

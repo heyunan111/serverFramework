@@ -13,7 +13,9 @@
 #include "Logger.h"
 #include "util.h"
 
+///保存当前线程的Thread对象指针，方便在需要时获取当前线程的信息
 static thread_local hyn::thread::Thread *t_thread = nullptr;
+///保存当前线程的名称
 static thread_local std::string t_thread_name = "UNKNOW";
 
 hyn::thread::Thread::Thread(std::function<void()> cb, const std::string &name) : m_cb(std::move(cb)), m_name(name) {

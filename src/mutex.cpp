@@ -37,3 +37,47 @@ void hyn::mutex::Semaphore::notify() {
         THROW_RUNTIME_ERROR_IF(1, "sem post error");
     }
 }
+
+hyn::mutex::FiberSemaphore::FiberSemaphore(size_t initial_concurrency) : m_concurrency(initial_concurrency) {
+
+}
+
+hyn::mutex::FiberSemaphore::~FiberSemaphore() {
+    assert(m_waiters.empty());
+}
+
+bool hyn::mutex::FiberSemaphore::tryWait() {
+    assert(hyn::scheduler::Scheduler::GetThis());
+    {
+        MutexType::Lock lock(m_mutex);
+        if (m_concurrency > 0u) {
+            --m_concurrency;
+            return true;
+        }
+        return false;
+    }
+}
+
+void hyn::mutex::FiberSemaphore::wait() {
+    assert(hyn::scheduler::Scheduler::GetThis());
+    {
+        MutexType::Lock lock(m_mutex);
+        if (m_concurrency > 0u) {
+            --m_concurrency;
+            return;
+        }
+        m_waiters.emplace_back(hyn::scheduler::Scheduler::GetThis(), hyn::fiber::Fiber::GetThis());
+    }
+    hyn::fiber::Fiber::YieldToHold();
+}
+
+void hyn::mutex::FiberSemaphore::notify() {
+    MutexType::Lock lock(m_mutex);
+    if (!m_waiters.empty()) {
+        auto next = m_waiters.front();
+        m_waiters.pop_front();
+        next.first->schedule(next.second);
+    } else {
+        ++m_concurrency;
+    }
+}

@@ -15,6 +15,7 @@
 
 #include "src/Hook.h"
 
+#include <thread>
 
 #include "test/test_http_connection.h"
 //#include "test/test_Socket.h"
@@ -26,29 +27,11 @@ int main() {
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test_log.log");
     //test();
     //test_sososs();
-    Address::ptr addr = Address::LookupAnyIPAddress("www.qq.com:80");
-    if (!addr) {
-        error("get addr error");
-        return -1;
+    for (long i = 0; i < 1000000; ++i) {
+        for (int j = 0; j < 100; ++j) {
+            std::cout << " ";
+        }
+        debug("debug");
     }
-    info("%s", addr->toString().c_str());
-    Socket::ptr sock = Socket::CreateTCP(addr);
-    info("%s", sock->toString().c_str());
-    bool rt = sock->connect(addr);
-    if (!rt) {
-        error("connect error");
-        return -1;
-    }
-    HttpConnection::ptr conn(new HttpConnection(sock));
-    HttpRequest::ptr req(new HttpRequest);
-    req->setPath("/blog/");
-    req->setHeader("host", "www.qq.com");
-    info("req:%s", req->toString().c_str());
-    auto rsp = conn->recvResponse();
-    if (!rsp) {
-        error("recvResponse error");
-        return -1;
-    }
-    info("rsp:%s", rsp->toString().c_str());
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
 }
