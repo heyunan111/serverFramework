@@ -309,8 +309,7 @@ public:
     /**
      * @brief 析构函数
      */
-    ~CASLock() {
-    }
+    ~CASLock() = default;
 
     /**
      * @brief 上锁
@@ -331,6 +330,9 @@ private:
     volatile std::atomic_flag m_mutex;
 };
 
+/**
+ *@brief 协程锁
+ */
 class FiberSemaphore : boost::noncopyable {
 public:
     typedef Spinlock MutexType;

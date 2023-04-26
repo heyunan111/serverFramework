@@ -28,9 +28,9 @@ void test_fiber() {
     hyn::fiber::Fiber::GetThis();
     std::cout << "main begin\n";
     hyn::fiber::Fiber::ptr fiber(new hyn::fiber::Fiber(run_in_f));
-    fiber->swap_in();
+    fiber->swapIn();
     std::cout << "main after swap in\n";
-    fiber->swap_in();
+    fiber->swapIn();
     std::cout << "main after end\n";
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
 }

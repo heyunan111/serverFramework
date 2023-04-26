@@ -105,7 +105,7 @@ int IOManager::addEvent(int fd, IOManager::Event event, std::function<void()> cb
         event_ctx.cb.swap(cb);
     } else {
         event_ctx.fiber = fiber::Fiber::GetThis();
-        assert(event_ctx.fiber->get_state() == fiber::Fiber::EXEC);
+        assert(event_ctx.fiber->getState() == fiber::Fiber::EXEC);
     }
     return 0;
 }
@@ -327,7 +327,7 @@ void IOManager::idle() {
         fiber::Fiber::ptr cur = fiber::Fiber::GetThis();
         auto raw_ptr = cur.get();
         cur.reset();
-        raw_ptr->swap_out();
+        raw_ptr->swapOut();
     }
 }
 

@@ -87,8 +87,7 @@ hyn::fiber::Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_ca
                                                                                         m_stack(nullptr) {
     ++s_fiber_count;
     ///FIXME:config
-    int stack_size = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("Fiber",
-                                                                                       "stacks_size");
+    //int stack_size = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("Fiber","stacks_size");
     m_stacksize = stacksize ? stacksize : 131072;
     m_stack = StackAlloc::Alloc(m_stacksize);
     // 获取上下文对象的副本
@@ -139,7 +138,7 @@ void hyn::fiber::Fiber::reset(const std::function<void()> &cb) {
     m_state = INIT;
 }
 
-void hyn::fiber::Fiber::swap_in() {
+void hyn::fiber::Fiber::swapIn() {
     SetThis(this);
     assert(m_state == INIT || m_state == READY || m_state == HOLD);
     m_state = EXEC;
@@ -149,7 +148,7 @@ void hyn::fiber::Fiber::swap_in() {
     }
 }
 
-void hyn::fiber::Fiber::swap_out() {
+void hyn::fiber::Fiber::swapOut() {
     SetThis(scheduler::Scheduler::GetMainFiber());
     if (swapcontext(&m_ctx, &scheduler::Scheduler::GetMainFiber()->m_ctx)) {
         error("swap out");
@@ -170,7 +169,7 @@ hyn::fiber::Fiber::ptr hyn::fiber::Fiber::GetThis() {
 void hyn::fiber::Fiber::YieldToReady() {
     Fiber::ptr cur = GetThis();
     cur->m_state = READY;
-    cur->swap_out();
+    cur->swapOut();
 }
 
 uint64_t hyn::fiber::Fiber::TotalFibers() {
@@ -186,16 +185,16 @@ void hyn::fiber::Fiber::MainFunc() {
         cur->m_state = TERM;
     } catch (std::exception &exception) {
         cur->m_state = EXCEPT;
-        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->get_id(),
+        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->getId(),
              hyn::util::backtrace_to_string().c_str());
     } catch (...) {
         cur->m_state = EXCEPT;
-        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->get_id(),
+        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->getId(),
              hyn::util::backtrace_to_string().c_str());
     }
     auto raw_ptr = cur.get();
     cur.reset();
-    raw_ptr->swap_out();
+    raw_ptr->swapOut();
 }
 
 void hyn::fiber::Fiber::SetThis(Fiber *f) {
@@ -206,12 +205,12 @@ void hyn::fiber::Fiber::YieldToHold() {
     Fiber::ptr cur = GetThis();
     assert(cur->m_state == EXEC);
     //cur->m_state = HOLD;
-    cur->swap_out();
+    cur->swapOut();
 }
 
 uint64_t hyn::fiber::Fiber::GetFiberId() {
     if (t_fiber)
-        return t_fiber->get_id();
+        return t_fiber->getId();
     return 0;
 }
 
@@ -246,11 +245,11 @@ void hyn::fiber::Fiber::CallerMainFunc() {
         cur->m_state = TERM;
     } catch (std::exception &exception) {
         cur->m_state = EXCEPT;
-        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->get_id(),
+        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->getId(),
              hyn::util::backtrace_to_string().c_str());
     } catch (...) {
         cur->m_state = EXCEPT;
-        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->get_id(),
+        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->getId(),
              hyn::util::backtrace_to_string().c_str());
     }
     auto raw_ptr = cur.get();

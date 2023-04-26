@@ -24,13 +24,18 @@ class Thread : public boost::noncopyable {
 public:
     typedef std::shared_ptr<Thread> ptr;
 
+    /**
+    * @brief 构造函数
+    * @param[in] cb 线程执行函数
+    * @param[in] name 线程名称
+    */
     Thread(std::function<void()> cb, const std::string &name);
 
     ~Thread();
 
-    [[nodiscard]] pid_t get_id() const { return m_id; }
+    [[nodiscard]] pid_t getId() const { return m_id; }
 
-    [[nodiscard]]const std::string &get_name() const { return m_name; }
+    [[nodiscard]]const std::string &getName() const { return m_name; }
 
     /**
      *@作用：等待线程执行完成

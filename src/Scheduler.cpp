@@ -62,7 +62,7 @@ void Scheduler::start() {
     m_thread_pool.resize(m_thread_count);
     for (size_t i = 0; i < m_thread_count; ++i) {
         m_thread_pool[i].reset(new thread::Thread([this] { run(); }, m_name + "_" + std::to_string(i)));
-        m_thread_id_vector.push_back(m_thread_pool[i]->get_id());
+        m_thread_id_vector.push_back(m_thread_pool[i]->getId());
     }
     lock.unlock();
 }
@@ -71,7 +71,7 @@ void Scheduler::stop() {
    // debug("scheduler stop");
     m_auto_stop = true;
     if (m_root_fiber && m_thread_count == 0 &&
-        (m_root_fiber->get_state() == fiber::Fiber::TERM || m_root_fiber->get_state() == fiber::Fiber::INIT)) {
+        (m_root_fiber->getState() == fiber::Fiber::TERM || m_root_fiber->getState() == fiber::Fiber::INIT)) {
         info("fiber stop");
         m_stopping = true;
     }
@@ -161,7 +161,7 @@ void Scheduler::run() {
 
                 assert(it->fiber || it->cb);
 
-                if (it->fiber && it->fiber->get_state() == fiber::Fiber::EXEC) {
+                if (it->fiber && it->fiber->getState() == fiber::Fiber::EXEC) {
                     //如果是fiber ,并且正在执行，不处理
                     ++it;
                     continue;
@@ -182,17 +182,17 @@ void Scheduler::run() {
             tickle();
         }
 
-        if (task.fiber && task.fiber->get_state() != fiber::Fiber::TERM &&
-            task.fiber->get_state() != fiber::Fiber::EXCEPT) {
+        if (task.fiber && task.fiber->getState() != fiber::Fiber::TERM &&
+            task.fiber->getState() != fiber::Fiber::EXCEPT) {
             //如果是协程
-            task.fiber->swap_in();
+            task.fiber->swapIn();
             --m_active_thread_count;
 
-            if (task.fiber->get_state() == fiber::Fiber::READY) {
+            if (task.fiber->getState() == fiber::Fiber::READY) {
                 //fiber可执行，放入消息队列去执行
                 schedule(task.fiber);
-            } else if (task.fiber->get_state() != fiber::Fiber::TERM &&
-                       task.fiber->get_state() != fiber::Fiber::EXCEPT) {
+            } else if (task.fiber->getState() != fiber::Fiber::TERM &&
+                       task.fiber->getState() != fiber::Fiber::EXCEPT) {
                 task.fiber->set_m_state(fiber::Fiber::HOLD);
             }
 
@@ -206,14 +206,14 @@ void Scheduler::run() {
             }
 
             task.reset();
-            cb_fiber->swap_in();
+            cb_fiber->swapIn();
             --m_active_thread_count;
 
-            if (cb_fiber->get_state() == fiber::Fiber::READY) {
+            if (cb_fiber->getState() == fiber::Fiber::READY) {
                 schedule(cb_fiber);
                 cb_fiber.reset();
-            } else if (cb_fiber->get_state() == fiber::Fiber::EXCEPT ||
-                       cb_fiber->get_state() == fiber::Fiber::TERM) {
+            } else if (cb_fiber->getState() == fiber::Fiber::EXCEPT ||
+                       cb_fiber->getState() == fiber::Fiber::TERM) {
                 cb_fiber->reset(nullptr);
             } else {
                 cb_fiber->set_m_state(fiber::Fiber::HOLD);
@@ -227,17 +227,17 @@ void Scheduler::run() {
                 continue;
             }
 
-            if (idle_fiber->get_state() == fiber::Fiber::TERM) {
+            if (idle_fiber->getState() == fiber::Fiber::TERM) {
                 info("idle fiber term");
                 break;
             }
 
             ++m_idle_thread_count;
-            idle_fiber->swap_in();
+            idle_fiber->swapIn();
             --m_idle_thread_count;
 
-            if (idle_fiber->get_state() != fiber::Fiber::TERM &&
-                idle_fiber->get_state() != fiber::Fiber::EXCEPT) {
+            if (idle_fiber->getState() != fiber::Fiber::TERM &&
+                idle_fiber->getState() != fiber::Fiber::EXCEPT) {
                 idle_fiber->set_m_state(fiber::Fiber::HOLD);
             }
         }

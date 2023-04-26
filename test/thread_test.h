@@ -21,9 +21,9 @@
 
 void fun1() {
     std::cout << hyn::thread::Thread::GetName() << "  ";
-    std::cout << hyn::thread::Thread::GetThis()->get_name() << "四代巨大的 ";
-    std::cout << hyn::thread::Thread::GetThis()->get_id();
-    error("name: %s", hyn::thread::Thread::GetThis()->get_name().c_str());
+    std::cout << hyn::thread::Thread::GetThis()->getName() << "四代巨大的 ";
+    std::cout << hyn::thread::Thread::GetThis()->getId();
+    error("name: %s", hyn::thread::Thread::GetThis()->getName().c_str());
     std::cout << '\n';
     sleep(5);
 }

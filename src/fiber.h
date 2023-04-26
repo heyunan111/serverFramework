@@ -87,24 +87,24 @@ public:
     /**
      *@brief：切换到当前协程
      */
-    void swap_in();
+    void swapIn();
 
     /**
      *@brief：切换到后台执行
      */
-    void swap_out();
+    void swapOut();
 
     /**
      *@brief：获取协程id
      */
-    uint64_t get_id() const {
+    uint64_t getId() const {
         return m_id;
     }
 
     /**
      *@brief：获取协程状态
      */
-    State get_state() const {
+    State getState() const {
         return m_state;
     }
 
