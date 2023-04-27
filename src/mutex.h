@@ -19,8 +19,7 @@
 #include <list>
 
 #include "Logger.h"
-#include "fiber.h"
-#include "Scheduler.h"
+
 
 namespace hyn::mutex {
 
@@ -333,28 +332,6 @@ private:
 /**
  *@brief 协程锁
  */
-class FiberSemaphore : boost::noncopyable {
-public:
-    typedef Spinlock MutexType;
-
-    explicit FiberSemaphore(size_t initial_concurrency = 0);
-
-    ~FiberSemaphore();
-
-    bool tryWait();
-
-    void wait();
-
-    void notify();
-
-    [[nodiscard]] size_t getConcurrency() const { return m_concurrency; }
-
-    void reset() { m_concurrency = 0; }
-
-private:
-    MutexType m_mutex;
-    std::list<std::pair<hyn::scheduler::Scheduler *, hyn::fiber::Fiber::ptr> > m_waiters;
-    size_t m_concurrency;
-};
+class FiberSemaphore;
 
 }

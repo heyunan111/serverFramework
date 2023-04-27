@@ -12,6 +12,8 @@
 
 #include "mutex.h"
 #include "Logger.h"
+#include "Scheduler.h"
+#include "fiber.h"
 
 hyn::mutex::Semaphore::Semaphore(const uint32_t count) {
     if (sem_init(&m_semaphore, 0, count)) {
@@ -37,6 +39,30 @@ void hyn::mutex::Semaphore::notify() {
         THROW_RUNTIME_ERROR_IF(1, "sem post error");
     }
 }
+
+class hyn::mutex::FiberSemaphore : boost::noncopyable {
+public:
+    typedef Spinlock MutexType;
+
+    FiberSemaphore(size_t initial_concurrency = 0);
+
+    ~FiberSemaphore();
+
+    bool tryWait();
+
+    void wait();
+
+    void notify();
+
+    size_t getConcurrency() const { return m_concurrency; }
+
+    void reset() { m_concurrency = 0; }
+
+private:
+    MutexType m_mutex;
+    std::list<std::pair<hyn::scheduler::Scheduler *, hyn::fiber::Fiber::ptr> > m_waiters;
+    size_t m_concurrency;
+};
 
 hyn::mutex::FiberSemaphore::FiberSemaphore(size_t initial_concurrency) : m_concurrency(initial_concurrency) {
 

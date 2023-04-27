@@ -77,6 +77,6 @@ private:
     pthread_t m_thread = 0;         //线程结构
     std::function<void()> m_cb;     //线程执行函数
     std::string m_name;             //线程名称
-    mutex::Semaphore m_semaphore;   //信号量
+    hyn::mutex::Semaphore m_semaphore;   //信号量
 };
 }

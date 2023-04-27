@@ -37,7 +37,7 @@ N-M协程调度器的优点是可以充分利用多核处理器的性能，实�
 class Scheduler : boost::noncopyable {
 public:
     typedef std::shared_ptr<Scheduler> ptr;
-    typedef hyn::mutex::Mutex mutexType;
+    typedef ::hyn::mutex::Mutex mutexType;
 
     /**
      *@brief：构造函数
