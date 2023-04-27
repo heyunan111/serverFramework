@@ -176,26 +176,7 @@ uint64_t hyn::fiber::Fiber::TotalFibers() {
     return s_fiber_count;
 }
 
-void hyn::fiber::Fiber::MainFunc() {
-    Fiber::ptr cur = GetThis();
-    assert(cur);
-    try {
-        cur->m_cb();
-        cur->m_cb = nullptr;
-        cur->m_state = TERM;
-    } catch (std::exception &exception) {
-        cur->m_state = EXCEPT;
-        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->getId(),
-             hyn::util::backtrace_to_string().c_str());
-    } catch (...) {
-        cur->m_state = EXCEPT;
-        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->getId(),
-             hyn::util::backtrace_to_string().c_str());
-    }
-    auto raw_ptr = cur.get();
-    cur.reset();
-    raw_ptr->swapOut();
-}
+
 
 void hyn::fiber::Fiber::SetThis(Fiber *f) {
     t_fiber = f;
@@ -232,8 +213,29 @@ void hyn::fiber::Fiber::back() {
 }
 
 
-void hyn::fiber::Fiber::set_m_state(State mState) {
+void hyn::fiber::Fiber::setState(State mState) {
     m_state = mState;
+}
+
+void hyn::fiber::Fiber::MainFunc() {
+    Fiber::ptr cur = GetThis();
+    assert(cur);
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch (std::exception &exception) {
+        cur->m_state = EXCEPT;
+        info("Fiber EXCEPT : %s,fiber id : %d,back trace:%s", exception.what(), cur->getId(),
+             hyn::util::backtrace_to_string().c_str());
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        info("Fiber EXCEPT,fiber id : %d,back trace:%s", cur->getId(),
+             hyn::util::backtrace_to_string().c_str());
+    }
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->swapOut();
 }
 
 void hyn::fiber::Fiber::CallerMainFunc() {

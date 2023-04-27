@@ -146,14 +146,14 @@ public:
     static uint64_t TotalFibers();
 
     /**
-     *@brief：协程执行函数，执行完成返回到线程调度协程
+     *@brief：函数是协程的入口函数，执行完当前协程的任务后会返回到线程的调度协程中，由它决定下一个协程执行的顺序，即调度功能
      */
     static void MainFunc();
 
     /**
-     *@brief：协程执行函数，执行完成返回到线程调度协程
+     *@brief：在协程执行完后主动切回主协程并结束当前协程的函数,检查协程是否已经结束，如果结束则会释放协程资源
      */
-    static void CallerMainFunc();
+    static void CallerMainFunc();//主协程
 
     /**
      *@brief：获取协程id
@@ -163,7 +163,7 @@ public:
     /**
      *@brief：设置state
      */
-    void set_m_state(State mState);
+    void setState(State mState);
 
 private:
     ///id
@@ -172,7 +172,6 @@ private:
     uint32_t m_stacksize = 0;
     /// 协程状态
     State m_state = INIT;
-private:
     /// 协程上下文
     ucontext_t m_ctx{};
     /// 协程运行栈指针

@@ -99,6 +99,8 @@ public:
             tickle();
     }
 
+    void switchTo(int thread = -1);
+
 public:
     static Scheduler *GetThis();
 
@@ -196,7 +198,7 @@ protected:
     ///协程id数组
     std::vector<int> m_thread_id_vector;
     ///线程数
-    size_t m_thread_count{0};
+    size_t m_threadCount{0};
     ///工作线程数
     std::atomic<size_t> m_active_thread_count{0};
     ///空闲线程数
@@ -216,7 +218,17 @@ private:
     ///协程调度器名称
     std::string m_name;
     ///use_caller为true有效，调度协程
-    fiber::Fiber::ptr m_root_fiber;
+    fiber::Fiber::ptr m_rootFiber;
+};
+
+class SchedulerSwitcher : public boost::noncopyable {
+public:
+    explicit SchedulerSwitcher(Scheduler *target = nullptr);
+
+    ~SchedulerSwitcher();
+
+private:
+    Scheduler *m_caller;
 };
 
 } // Scheduler

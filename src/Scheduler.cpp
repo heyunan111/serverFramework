@@ -32,15 +32,15 @@ Scheduler::Scheduler(size_t thread, bool use_caller, const std::string &name) : 
         assert(GetThis() == nullptr);
         t_scheduler = this;
 
-        m_root_fiber.reset(new fiber::Fiber([this] { run(); }, 0, true));
+        m_rootFiber.reset(new fiber::Fiber([this] { run(); }, 0, true));
         thread::Thread::SetName(name);
-        t_fiber = m_root_fiber.get();
+        t_fiber = m_rootFiber.get();
         m_root_thread_id = util::GetThreadId();
         m_thread_id_vector.emplace_back(m_root_thread_id);
     } else {
         m_root_thread_id = -1;
     }
-    m_thread_count = thread;
+    m_threadCount = thread;
 }
 
 Scheduler::~Scheduler() {
@@ -59,8 +59,8 @@ void Scheduler::start() {
     m_stopping = false;
     assert(m_thread_pool.empty());
 
-    m_thread_pool.resize(m_thread_count);
-    for (size_t i = 0; i < m_thread_count; ++i) {
+    m_thread_pool.resize(m_threadCount);
+    for (size_t i = 0; i < m_threadCount; ++i) {
         m_thread_pool[i].reset(new thread::Thread([this] { run(); }, m_name + "_" + std::to_string(i)));
         m_thread_id_vector.push_back(m_thread_pool[i]->getId());
     }
@@ -68,16 +68,15 @@ void Scheduler::start() {
 }
 
 void Scheduler::stop() {
-   // debug("scheduler stop");
+    // debug("scheduler stop");
     m_auto_stop = true;
-    if (m_root_fiber && m_thread_count == 0 &&
-        (m_root_fiber->getState() == fiber::Fiber::TERM || m_root_fiber->getState() == fiber::Fiber::INIT)) {
+    if (m_rootFiber && m_threadCount == 0 &&
+        (m_rootFiber->getState() == fiber::Fiber::TERM || m_rootFiber->getState() == fiber::Fiber::INIT)) {
         info("fiber stop");
         m_stopping = true;
-    }
-
-    if (stopping()) {
-        return;
+        if (stopping()) {
+            return;
+        }
     }
 
     if (m_root_thread_id != -1) {
@@ -87,17 +86,17 @@ void Scheduler::stop() {
     }
 
     m_stopping = true;
-    for (int i = 0; i < m_thread_count; ++i) {
+    for (int i = 0; i < m_threadCount; ++i) {
         tickle();
     }
 
-    if (m_root_fiber) {
+    if (m_rootFiber) {
         tickle();
     }
 
-    if (m_root_fiber) {
+    if (m_rootFiber) {
         if (!stopping()) {
-            m_root_fiber->call();
+            m_rootFiber->call();
         }
     }
 
@@ -193,7 +192,7 @@ void Scheduler::run() {
                 schedule(task.fiber);
             } else if (task.fiber->getState() != fiber::Fiber::TERM &&
                        task.fiber->getState() != fiber::Fiber::EXCEPT) {
-                task.fiber->set_m_state(fiber::Fiber::HOLD);
+                task.fiber->setState(fiber::Fiber::HOLD);
             }
 
             task.reset();
@@ -216,7 +215,7 @@ void Scheduler::run() {
                        cb_fiber->getState() == fiber::Fiber::TERM) {
                 cb_fiber->reset(nullptr);
             } else {
-                cb_fiber->set_m_state(fiber::Fiber::HOLD);
+                cb_fiber->setState(fiber::Fiber::HOLD);
                 cb_fiber.reset();
             }
 
@@ -238,7 +237,7 @@ void Scheduler::run() {
 
             if (idle_fiber->getState() != fiber::Fiber::TERM &&
                 idle_fiber->getState() != fiber::Fiber::EXCEPT) {
-                idle_fiber->set_m_state(fiber::Fiber::HOLD);
+                idle_fiber->setState(fiber::Fiber::HOLD);
             }
         }
     }
@@ -257,6 +256,32 @@ void Scheduler::idle() {
     debug("idle");
     while (!stopping()) {
         fiber::Fiber::YieldToHold();
+    }
+}
+
+using namespace fiber;
+
+void Scheduler::switchTo(int thread) {
+    assert(Scheduler::GetThis() != nullptr);
+    if (Scheduler::GetThis() == this) {
+        if (thread == -1 || thread == util::GetThreadId()) {
+            return;
+        }
+    }
+    schedule(Fiber::GetThis(), thread);
+    Fiber::YieldToHold();
+}
+
+SchedulerSwitcher::SchedulerSwitcher(Scheduler *target) {
+    m_caller = Scheduler::GetThis();
+    if (target) {
+        target->switchTo();
+    }
+}
+
+SchedulerSwitcher::~SchedulerSwitcher() {
+    if (m_caller) {
+        m_caller->switchTo();
     }
 }
 } // Scheduler
