@@ -25,13 +25,13 @@ using namespace std;
 
 int main() {
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test_log.log");
-    //test();
+    test();
     //test_sososs();
-    for (long i = 0; i < 1000000; ++i) {
+    /*for (long i = 0; i < 1000000; ++i) {
         for (int j = 0; j < 100; ++j) {
             std::cout << " ";
         }
         debug("debug");
-    }
+    }*/
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
 }

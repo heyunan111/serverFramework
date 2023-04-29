@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.20)
 project(serverFramework)
 set(CMAKE_CXX_STANDARD 20)
 
-find_package(OpenSSL REQUIRED)
+
 find_package(Boost REQUIRED COMPONENTS program_options)
 
 include_directories(${Boost_INCLUDE_DIRS})
-include_directories(/usr/include/openssl)
+
 
 add_executable(serverFramework main.cpp src/_Singleton.h src/Address.cpp src/Address.h src/endian.h src/exceptdef.h
         src/FDManger.cpp src/FDManger.h src/fiber.cpp src/fiber.h src/Hook.cpp src/Hook.h src/iniFile.cpp src/iniFile.h
@@ -27,5 +27,5 @@ add_executable(serverFramework main.cpp src/_Singleton.h src/Address.cpp src/Add
         main.cpp src/URI.h)
 
 target_link_libraries(serverFramework ${SOURCE_FILES})
-target_link_libraries(serverFramework PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+
 

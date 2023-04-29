@@ -13,8 +13,6 @@
 #include <netinet/tcp.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 #include <boost/noncopyable.hpp>
 #include "Address.h"
 
