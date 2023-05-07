@@ -45,7 +45,7 @@ private:
         typedef mutex::Mutex MutexType;
         struct EventContext {
             ///待执行scheduler
-            scheduler::Scheduler *scheduler;
+            scheduler::Scheduler *scheduler = nullptr;
             ///事件协程
             fiber::Fiber::ptr fiber;
             ///事件回调函数
@@ -72,7 +72,7 @@ private:
         void triggerEvent(Event event);
 
         ///事件关联句柄
-        int m_fd;
+        int m_fd = 0;
         ///读事件
         EventContext read;
         ///写事件
@@ -130,9 +130,6 @@ public:
      *@brief：返回当前的IOManager
      */
     static IOManager *GetThis();
-
-    bool stopping(uint64_t &timeout);
-
 protected:
     void tickle() override;
 
@@ -149,6 +146,7 @@ protected:
      */
     void contextResize(size_t size);
 
+    bool stopping(uint64_t &timeout);
 private:
     ///epoll句柄
     int m_epfd;

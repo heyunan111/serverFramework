@@ -139,6 +139,7 @@ void hyn::fiber::Fiber::reset(const std::function<void()> &cb) {
 }
 
 void hyn::fiber::Fiber::swapIn() {
+    debug("swapIN()");
     SetThis(this);
     assert(m_state == INIT || m_state == READY || m_state == HOLD);
     m_state = EXEC;

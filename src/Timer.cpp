@@ -120,12 +120,16 @@ uint64_t TimerManager::getNextTimer() {
 }
 
 void TimerManager::addTimer(const Timer::ptr &val, mutex::RWMutex::WriteLock &lock) {
-    auto it = m_timers.insert(val);
-    if (it.first == m_timers.begin() && !m_tickled)
+    auto it = m_timers.insert(val).first;
+    bool at_front = (it == m_timers.begin()) && !m_tickled;
+    if (at_front) {
         m_tickled = true;
+    }
     lock.unlock();
-    if (it.first == m_timers.begin() && !m_tickled)
+
+    if (at_front) {
         onTimerInsertedAtFront();
+    }
 }
 
 void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
@@ -140,7 +144,7 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
     if (m_timers.empty())
         return;
     bool rollover = detectClockRollover(now_time);
-    if (!rollover && (*m_timers.begin())->m_next > now_time)
+    if (!rollover && ((*m_timers.begin())->m_next > now_time))
         return;
     Timer::ptr nowTimer(new Timer(now_time));
     auto it = rollover ? m_timers.end() : m_timers.lower_bound(nowTimer);

@@ -51,7 +51,7 @@ Scheduler::~Scheduler() {
 }
 
 void Scheduler::start() {
-    //debug("scheduler start");
+    debug("scheduler start");
     mutexType::Lock lock(m_mutex);
     if (!m_stopping) {
         return;

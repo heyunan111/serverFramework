@@ -21,6 +21,7 @@
 using namespace hyn;
 
 void test_socket() {
+    debug("test_socket");
     IPAddress::ptr addr = Address::LookupAnyIPAddress("www.baidu.com");
     if (addr) {
         info("get address : %s", addr->toString().c_str());

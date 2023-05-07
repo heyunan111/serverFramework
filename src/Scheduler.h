@@ -195,7 +195,7 @@ private:
     };
 
 protected:
-    ///协程id数组
+    ///线程id数组
     std::vector<int> m_thread_id_vector;
     ///线程数
     size_t m_threadCount{0};

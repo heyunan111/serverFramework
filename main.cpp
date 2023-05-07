@@ -17,21 +17,15 @@
 
 #include <thread>
 
-#include "test/test_http_connection.h"
-//#include "test/test_Socket.h"
+//#include "test/test_http_connection.h"
+#include "test/test_Socket.h"
 
 
 using namespace std;
 
 int main() {
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test_log.log");
-    test();
-    //test_sososs();
-    /*for (long i = 0; i < 1000000; ++i) {
-        for (int j = 0; j < 100; ++j) {
-            std::cout << " ";
-        }
-        debug("debug");
-    }*/
+    //test();
+    test_sososs();
     hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
 }

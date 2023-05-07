@@ -90,7 +90,7 @@ int IOManager::addEvent(int fd, IOManager::Event event, std::function<void()> cb
     epevent.data.ptr = fd_ctx;
 
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
-    if (rt != 0) {
+    if (rt) {
         error(" error epoll_ctl :epfd:%d,op:%d,fd:%d,errno:%d", m_epfd, op, fd, errno);
         return -1;
     }
@@ -357,9 +357,9 @@ IOManager::FdContext::EventContext &IOManager::FdContext::get_context(IOManager:
 }
 
 void IOManager::FdContext::ResetContext(IOManager::FdContext::EventContext &ctx) {
+    ctx.scheduler = nullptr;
     ctx.fiber.reset();
     ctx.cb = nullptr;
-    ctx.scheduler = nullptr;
 }
 
 void IOManager::FdContext::triggerEvent(IOManager::Event event) {
