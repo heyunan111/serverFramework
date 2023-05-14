@@ -27,13 +27,13 @@ static uint64_t s_http_response_max_body_size = 0;
 struct RequestSizeIniter {
     RequestSizeIniter() {
         ///FIXME:config
-        int a = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "request_buffer_size");
+        //int a = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "request_buffer_size");
         s_http_request_buffer_size = 4096;
-        int b = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "request_max_body_size");
+        //int b = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "request_max_body_size");
         s_http_request_max_body_size = 67108864;
-        int c = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "response_buffer_size");
+        //int c = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "response_buffer_size");
         s_http_response_buffer_size = 4096;
-        int d = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "response_max_body_size");
+        //int d = hyn::singleton::Singleton<hyn::ini::IniFile>::get_instance()->get("HTTP", "response_max_body_size");
         s_http_response_max_body_size = 67108864;
     }
 };

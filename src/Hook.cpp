@@ -397,7 +397,7 @@ int close(int fd) {
 
 int fcntl(int fd, int cmd, ... /* arg */ ) {
     va_list va;
-    va_start(va, cmd);
+    va_start(va, cmd);//可变参数
     switch (cmd) {
         case F_SETFL: {
             int arg = va_arg(va, int);
