@@ -1,35 +1,9 @@
-#include "src/Logger.h"
-
-#include <sys/types.h>     // 类型定义
-#include <sys/socket.h>    // socket相关定义
-#include <netinet/in.h>    // INADDR_ANY、INADDR_NONE等宏定义
-#include <arpa/inet.h>     // 网络地址转换函数inet_ntoa、inet_aton等
-#include <netdb.h>         // 提供gethostbyname等DNS操作函数
-#include <fcntl.h>         // 提供open等文件操作函数
-#include <unistd.h>        // 提供read、write、close等文件操作函数
-#include <errno.h>         // 提供errno全局变量，保存出错状态
-#include <cstring>         // 提供memset、memcpy、memmove、strerror等函数
-#include <cstdio>          // 提供printf、sprintf等函数
-#include <cstdlib>         // 提供exit、malloc、free等函数
-#include <iostream>        // 提供C++风格的输入输出支持
-
-#include "src/Hook.h"
-
-#include <thread>
-
-#include <mutex>
-
-
-//#include "test/test_http_connection.h"
-#include "test/test_Socket.h"
-
-
-using namespace std;
+#include "test/test_http_server.h"
 
 int main() {
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open("/home/hyn/test_log.log");
-    error("test log");
-    //test();
-    //test_sososs();
-    hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
+  hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->open(
+      "/home/hyn/test_log.log");
+  test();
+  hyn::singleton::Singleton<hyn::logger::Logger>::get_instance()->close();
+  return 0;
 }

@@ -1,0 +1,3 @@
+/home/hyn/serverFramework/build/CMakeFiles/serverFramework.dir
+/home/hyn/serverFramework/build/CMakeFiles/edit_cache.dir
+/home/hyn/serverFramework/build/CMakeFiles/rebuild_cache.dir

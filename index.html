@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Arithmetic Questions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        #question {
+            font-size: 24px;
+            margin-top: 40px;
+            color: #333;
+        }
+
+        input[type="text"] {
+            font-size: 18px;
+            padding: 10px;
+            margin-top: 20px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #result {
+            font-size: 18px;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .next-button {
+            margin-top: 40px;
+            text-align: right;
+        }
+
+        .next-button button {
+            background-color: #dc3545;
+        }
+
+        .next-button button:hover {
+            background-color: #b52b3d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Arithmetic Questions</h1>
+        <div id="question"></div>
+        <input type="text" id="answer" placeholder="Enter your answer">
+        <button onclick="checkAnswer()">Submit Answer</button>
+        <div id="result"></div>
+        <div class="next-button">
+            <button onclick="generateQuestion()">Next Question</button>
+        </div>
+    </div>
+
+    <script>
+        var correctAnswer;
+
+        function generateQuestion() {
+            var num1 = Math.floor(Math.random() * 100) + 1;
+            var num2 = Math.floor(Math.random() * 100) + 1;
+            var operator = Math.floor(Math.random() * 4);
+
+            var questionText;
+
+            switch (operator) {
+                case 0:
+                    questionText = num1 + " + " + num2;
+                    correctAnswer = num1 + num2;
+                    break;
+                case 1:
+                    questionText = num1 + " - " + num2;
+                    correctAnswer = num1 - num2;
+                    break;
+                case 2:
+                    questionText = num1 + " × " + num2;
+                    correctAnswer = num1 * num2;
+                    break;
+                case 3:
+                    questionText = num1 + " ÷ " + num2;
+                    correctAnswer = num1 / num2;
+                    break;
+            }
+
+            document.getElementById("question").innerHTML = questionText;
+            document.getElementById("answer").value = "";
+            document.getElementById("answer").focus();
+            document.getElementById("result").innerHTML = "";
+        }
+
+        function checkAnswer() {
+            var userAnswer = parseFloat(document.getElementById("answer").value);
+            var resultText;
+
+            if (isNaN(userAnswer)) {
+                resultText = "Please enter a valid answer";
+            } else {
+                if (userAnswer === correctAnswer) {
+                    resultText = "Correct!";
+                } else {
+                    resultText = "Incorrect. The correct answer is " + correctAnswer;
+                }
+            }
+
+            document.getElementById("result").innerHTML = resultText;
+        }
+
+        generateQuestion();
+    </script>
+</body>
+
+</html>
