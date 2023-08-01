@@ -51,11 +51,17 @@ void run() {
     resp->setBody(htmlString);
     return 0;
   });
+  sd->addServlet("/hyn/test",
+                 [](const HttpRequest::ptr &req, const HttpResponse::ptr &resp,
+                    const HttpSession::ptr &session) {
+                   resp->setBody("test");
+                   return 0;
+                 });
   server->start();
 }
 
 void test() {
-  IOManager iom(2);
+  IOManager iom(20);
   iom.schedule(run);
 }
 
